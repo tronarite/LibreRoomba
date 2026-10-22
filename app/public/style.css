@@ -1,0 +1,18 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background:#101827; color:#f4f7fb; }
+* { box-sizing:border-box; } body { margin:0; } .app { max-width:620px; margin:auto; padding:20px 16px 36px; }
+header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; } h1 { margin:0; font-size:1.6rem; } h2 { margin-top:0; }
+.connection { font-size:.85rem; color:#fca5a5; } .connection.online { color:#86efac; } .card,.map { background:#1d293d; border:1px solid #334155; border-radius:16px; padding:22px; }
+.phase { font-size:1.3rem; margin:0 0 24px; color:#93c5fd; }.battery-label { display:flex; justify-content:space-between; }.battery { height:12px; background:#0f172a; border-radius:99px; overflow:hidden; margin:8px 0 20px; }.battery div { height:100%; width:0; background:#4ade80; transition:width .3s; }
+.notice { padding:10px; border-radius:8px; background:#78350f; color:#fef3c7; }.hidden { display:none; }.controls { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; } button { border:0; border-radius:9px; min-height:45px; font:inherit; font-weight:650; color:#07111f; background:#7dd3fc; cursor:pointer; } button[data-command="stop"] { background:#fca5a5; } button:disabled { opacity:.42; cursor:not-allowed; }.map { min-height:180px; margin-top:18px; display:flex; align-items:center; justify-content:center; color:#94a3b8; border-style:dashed; } .map h2 { margin:0; font-size:1rem; font-weight:500; }
+
+.row{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid rgba(128,128,128,.25)}
+.row:last-child{border-bottom:0}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid rgba(128,128,128,.25);white-space:nowrap}
+
+.schedule-row{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem 0;border-bottom:1px solid rgba(128,128,128,.25)}
+.schedule-days{display:inline-flex;gap:.2rem}
+.schedule-day-btn{min-width:2rem}
+#schedule-actions{display:flex;gap:.5rem;margin-top:.6rem}

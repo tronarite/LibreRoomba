@@ -1,0 +1,15 @@
+research/robot-password.txt
+research/state-snapshot.json
+research/mission-log.json
+research/apk/
+research/apk-splits/
+research/jadx-out/
+research/native/
+node_modules/
+*.log
+app/data/
+
+research/jadx-res/
+research/inventory/backup-settings.json
+LOCAL-NOTES.md
+app/data/

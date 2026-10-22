@@ -1,0 +1,59 @@
+##### libcore_base.so (32537 strings)
+            "desired" : %s
+            "desired" : { "padWetness" : {"padPlate": %d} }
+            "desired" : {"rankOverlap": %d}
+            "desired" : {"suctionLevel": %d}
+        "desired" : { "padWetness" : {"reusable": %d, "disposable": %d} }
+        "desired" : { "padWetness" : {"reusable": %d} }
+"cmd",{"op":"
+{ "binPause" : %s }
+{ "carpetBoost" : %s,  "vacHigh" : %s }
+{ "cleanSchedule" : { "cycle" : ["%s", "%s", "%s", "%s", "%s", "%s", "%s"],
+{ "command" : "%s", "time" : %d, "initiator" : "localApp" }
+{ "command" : "%s", "time" : %d, "initiator" : "rmtApp" }
+{ "flushSluice" : %d}
+{ "language" : %s }
+{ "localtimeoffset" : %s }
+{ "logUpload" : %s}
+{ "mapUploadAllowed" : %s}
+{ "openOnly" : %s }
+{ "padDirtyPause" : %d}
+{ "padDryAllowed" : %d}
+{ "padWetness" : {"padPlate": %d} }
+{ "rankOverlap" : %d}
+{ "sendwifilog" : %s }
+{ "state" : %s }
+{ "state" : { "%s" : %s } }
+{ "suctionLevel" : %d}
+{ "twoPass" : %s, "noAutoPasses" : %s }
+{ "uap" : %s }
+{ "utctime" : %s }
+{ "wactivate" : %s }
+{"echo" : %s}
+{"id":"%s", "robot_id":"%s", "command":"%s", "select_all": true}
+{"state":{"reported":{"echo":%s}},"version":%d}
+##### libcore_jni.so (233943 strings)
+{ "binTypeDetect" : %s}
+{ "bleDevLoc" : %s}
+{ "childLock" : %s}
+{ "chrgLrPtrn" : %s}
+{ "code" : %s}
+{ "command" : "%s", "time" : %d, "initiator" : "%%s" } 
+{ "command" : "startlog", "feedback_id" : "%s", "mhdtag" : "user" , "duration" : 1000}
+{ "command":"clean", "ordered": %d, "regions" : %s, "pmap_id": "%s", "pmapv_id": "%s", "time" : %d, "initiator" : "%%s" }
+{ "dispLight" : %s}
+{ "imgUpload" : %s}
+{ "localtimeoffset" : %s }
+{ "logUpload" : %s }
+{ "odoaMode" : %s}
+{ "pmapCL" : %s}
+{ "pmapLearningAllowed" : %s}
+{ "uap" : %s }
+{ "utctime" : %s }
+{ "wDevLoc" : %s}
+{ "wTileScan" : %s}
+{ "wactivate" : %s }
+{"precheck": { %s }}
+{"robots" : %s}
+{"visible" : %s
+##### libdata_module.so (34668 strings)

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LibreRoomba</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header><h1>LibreRoomba</h1><span id="connection" class="connection">Desconectado</span></header>
+    <section class="card">
+      <h2 id="name">Roomba</h2>
+      <p id="phase" class="phase">Esperando estado</p>
+      <div class="battery-label"><span>Batería</span><strong id="battery-value">—</strong></div>
+      <div class="battery"><div id="battery-bar"></div></div>
+      <p id="error" class="notice hidden"></p>
+      <p id="bin" class="notice hidden">El depósito está lleno.</p>
+      <div class="controls">
+        <button data-command="start">Limpiar</button><button data-command="pause">Pausa</button>
+        <button data-command="resume">Reanudar</button><button data-command="stop">Parar</button>
+        <button data-command="dock">Base</button><button data-command="find">Buscar</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Ajustes de limpieza</h2>
+      <label class="row"><span>Doble pasada</span><input type="checkbox" id="pref-twoPass"></label>
+      <label class="row"><span>Pausar si el depósito está lleno</span><input type="checkbox" id="pref-binPause"></label>
+      <label class="row"><span>Limpiar solo bordes abiertos</span><input type="checkbox" id="pref-openOnly"></label>
+      <label class="row"><span>Bloqueo infantil (botones del robot)</span><input type="checkbox" id="pref-childLock"></label>
+      <label class="row"><span>Solapamiento</span><select id="pref-rankOverlap"><option value="15">15</option><option value="25">25</option><option value="67">67</option><option value="85">85</option></select></label>
+    </section>
+    <section class="card">
+      <h2>Programación semanal</h2>
+      <div id="schedule-body"></div>
+    </section>
+    <section class="card">
+      <h2>Estado y mantenimiento</h2>
+      <div id="maintenance-body"></div>
+    </section>
+    <section class="card">
+      <h2>Historial de misiones</h2>
+      <div class="table-wrap"><table><thead><tr><th>Inicio</th><th>Duración</th><th>Ciclo</th><th>Batería</th><th>Área</th></tr></thead><tbody id="history-body"></tbody></table></div>
+    </section>
+    <section class="map"><h2>Mapa (próximamente)</h2></section>
+  </main>
+  <script src="app.js"></script>
+  <script src="maintenance.js"></script>
+  <script src="history.js"></script>
+  <script src="schedule.js"></script>
+</body>
+</html>
