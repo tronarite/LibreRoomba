@@ -1,49 +1,33 @@
 # LibreRoomba
 
-Objetivo: web app propia para controlar la Roomba i1+ del usuario (control local) e investigar si se puede desbloquear el mapeo.
+Objetivo: clon web de la app de iRobot para controlar la Roomba i1+ del usuario en local, estudiar el robot a fondo y desbloquear todas las funciones de la app (mapas incluidos); después ir más allá.
 
-## Estado (2026-10-22)
-- REA (servidor MCP `rea`, skill `reverse-engineer-anything`) instalado a nivel de usuario. Verificado: `claude mcp list` lo da Connected y responde 207 herramientas. Las herramientas solo cargan al abrir una sesión nueva.
-- Hallazgo: la i1/i1+ es hardware idéntico a la i3 (sin cámara; sensor óptico de suelo + giroscopio). La i3 recibió Imprint Smart Mapping por firmware; la i1 lo tiene bloqueado por software. Hay que verificarlo en el robot.
-- Protocolo local documentado en `research/protocol-notes.md` (fuentes en `research/src/`): descubrimiento UDP 5678 con `irobotmcs`; MQTT TLS en 8883, usuario=BLID, cifrado AES128-SHA256 + SSL_OP_LEGACY_SERVER_CONNECT; topics `cmd` y `delta`.
-- El worker agy (Gemini) falló sin error ni salida; no reintentar en bucle, repartir entre otras bolsas.
+## Cómo retomar (leer primero)
+1. Datos reales (IP, BLID, MAC, cómo arrancar): `LOCAL-NOTES.md` (ignorado por git). Scripts y servidor leen `ROBOT_IP` y `ROBOT_BLID` del entorno. Contraseña: `research/robot-password.txt` (ignorado; el robot la entrega con un `0x00` final que hay que quitar).
+2. **Solo 1 conexión MQTT local a la vez**: parar la web app (`app/server.js`) antes de lanzar scripts de `research/`, y al terminar dejarla parada para que la app oficial recupere el robot.
+3. Si MQTT responde "Bad username or password": la contraseña cambió. Con el robot en la base, `node research/get-password.js <ip>` y pedir al usuario que mantenga HOME 2-3 s hasta que parpadee el icono Wi-Fi (si el eco acaba en `03`, no está en modo emparejamiento).
+4. Pruebas que cambian algo en el robot: guardar el valor previo y restaurarlo siempre (ver `research/test-prefs.js`, `test-prefs2.js`, `test-schedule.js`). No tocar Wi-Fi ni idioma sin avisar. Ajustes originales a respetar: twoPass false, rankOverlap 15, binPause true, openOnly false, childLock false, programación L-V 10:00.
+5. Git: rama `beta` (hay un commit; sin remoto, sin push). Merge a `main` solo con confirmación del usuario. Nunca subir BLID, IP, MAC, contraseña, correo, APK ni volcados (ver `.gitignore`); comprobar con grep antes de commitear.
+6. Workers (ver `~/.claude/CLAUDE.md`, "Flujo rápido"): `run-parallel.ps1` con JSON, `effort: low`, destino agy; Codex sin cuota hasta 2026-11-20. En esta sesión agy falló al principio por un conflicto entre el modelo `gemini-3.8-flash-high` y `--effort`; otro proceso lo estaba diagnosticando y después funcionó con `effort: low`. Siempre verificar que los archivos existen y pasar los autotests.
 
-## Avance (2026-10-22, sesión 2)
-- Robot en <IP_ROBOT>, BLID `<BLID>`, fw `daredevil+2.6.0`, sku i155640, protocolo MQTT.
-- Contraseña obtenida (HOME hasta que parpadea el icono Wi-Fi; si el eco acaba en `03` no está en modo emparejamiento) y guardada en `research/robot-password.txt` (no subir a git). Scripts: `research/get-password.js` (reintenta solo), `research/listen.js` (escucha solo lectura).
-- Conexión MQTT local verificada. Estado completo en `research/state-snapshot.json`.
-- Mapas: `pmaps: []`, `pmapLearningAllowed: false`, `optFeats.pmaps.enabled: false`, `mapUploadAllowed: true`; telemetría con `vslam_report`/`map_save`. Bloqueo por software.
-- Misión de prueba por MQTT (`cmd` start/dock, funciona; ignora `start` si aún está volviendo a la base): en 50 s de `phase run` NO llegó `pose`. El MQTT local de la i1 no da posición.
-- Intento de activar `pmapLearningAllowed:true` vía topic `delta`: el robot lo ignora (sigue false, `optFeats.pmaps.enabled` false). El bloqueo parece venir de la nube/firmware.
-- Plan B en curso: `research/apk/iRobot.apk` (com.irobot.home 7.18.0, firma iRobot Corp verificada, SHA256 36bab3c6…b05) decompilado con jadx 1.5.6 (CLI vía `java -cp jadx-gui-1.5.6-all.jar jadx.cli.JadxCLI`) en `research/jadx-out/` (23 667 .java, 236 errores normales). REA/jadx-mcp no disponible: pide REA_JADX_MCP_JAR.
-- El APK es solo `base.apk` (sin `lib/`). La lógica de mapas está en C++ nativo (capa Djinni `com.irobot.core`); falta `split_config.arm64_v8a.apk` del Pixel 10a. Java no contiene `pmapLearningAllowed` ni `optFeats`.
-- Contraseña: el robot la entrega con un `0x00` final (terminador C) que hay que quitar o MQTT responde "Bad username or password". Ya limpio en el archivo y en `get-password.js`. (Contraseña actual obtenida a las 12:5x tras volver a pulsar HOME.)
-- `adb` y `jadx` instalados (winget). Splits del Pixel en `research/apk-splits/`; libs nativas extraídas en `research/native/lib/arm64-v8a/` (`libcore_jni.so` 103 MB, `libcore_base.so`).
-- Del nativo: la app cambia ajustes publicando `{"state":{"desired":{...}}}` en `$aws/things/<BLID>/shadow/update`; tiene `{ "pmapLearningAllowed" : %s}` y el evento `PMapContinuousLearningAllowedEventState`. Nube: `disc-<env>.iot.irobotapi.com/v1/robot/discover` y `/v1/pmaps/clean-score`. Enviado `desired.pmapLearningAllowed:true` con ese formato: el robot lo ignora (sigue false, `cap.pmaps` null, `optFeats.pmaps.enabled` false).
-- Web app: `app/` (probada ya contra el robot real: conecta y da estado) (Node, express+ws+mqtt, `node server.js --mock` para probar sin robot). Hecha por Codex, revisada y corregida por mí (quitado un fallback de express/ws casero que fallaba). Aún no probada contra el robot real.
+## Estado de la investigación
+- Robot: i1+ (sku i155640), firmware `daredevil+2.6.0`, hardware equivalente a la i3. `cap.pmaps` null; `maps: 2`.
+- Protocolo local (ver `research/protocol-notes.md`): descubrimiento UDP 5678 con `irobotmcs`; MQTT TLS 8883, usuario=clientId=BLID, cifrado `AES128-SHA256` + `SSL_OP_LEGACY_SERVER_CONNECT`. Órdenes: topic `cmd` `{"command":X,"time":N,"initiator":"localApp"}` (start, stop, pause, resume, dock, find probados); ajustes: topic `delta` `{"state":{clave:valor}}`.
+- Ajustes aceptados (probados, restaurados): `twoPass`, `rankOverlap`, `binPause`, `openOnly`, `childLock`, y `cleanSchedule2` (programación; se puede cambiar de verdad). Ignorados: `carpetBoost`/`vacHigh`, `pmapLearningAllowed` (también con el formato `desired` del shadow). `dispLight` no lo reporta la i1 (sin probar).
+- Mapas: `pmaps: []`, `pmapLearningAllowed: false`, `optFeats.pmaps.enabled: false`, `mapUploadAllowed: true`; hay telemetría `vslam_report`/`map_save`. No llega `pose` ni durante una misión (50 s probados). El bloqueo parece venir de la nube.
+- APK iRobot Home 7.18.0 (firma de iRobot verificada): decompilado con jadx en `research/jadx-out/`; recursos en `research/jadx-res/`; splits del Pixel 10a en `research/apk-splits/`; libs nativas en `research/native/lib/arm64-v8a/` (`libcore_jni.so` 103 MB, `libcore_base.so`). La lógica está en C++ (capa Djinni `com.irobot.core`); el Java casi no tiene URLs. Del nativo: ajustes vía `{"state":{"desired":{...}}}` en `$aws/things/<BLID>/shadow/update`; nube `disc-<env>.iot.irobotapi.com/v1/robot/discover`, `/v1/pmaps/clean-score`; orden de limpieza por zonas `{"command":"clean","regions":[...],"pmap_id","pmapv_id"}` (requiere pmap).
+- Herramientas instaladas: jadx (CLI vía `java -cp jadx-gui-1.5.6-all.jar jadx.cli.JadxCLI`), adb. El MCP de REA no sirve para APK sin `REA_JADX_MCP_JAR`.
+- Inventario y plan: `research/inventory/roadmap.md` (+ `native-commands.txt`, `app-ui-titles.txt`).
 
-## Fase actual (2026-10-22): clon web de la app iRobot
-- Objetivo del usuario: clon web de la app, estudiar el robot a fondo, desbloquear todas las funciones de la app; después ir más allá. Plan en `research/inventory/roadmap.md`.
-- git iniciado en `beta` (sin commits aún); `.gitignore` protege contraseña/APK/volcados.
-- Workers: agy falla al arrancar con cualquier modelo (no es cuota: error en 3 s, 0 pasos); Codex sin cuota hasta 20-nov-2026. Se trabaja en directo.
-- Ajustes verificados en el robot real (topic `delta`, `{"state":{k:v}}`): `twoPass`, `rankOverlap` (15 actual), `binPause`. Ignorados: `carpetBoost`/`vacHigh`, `pmapLearningAllowed`. Test reutilizable: `research/test-prefs.js` (restaura valores). La web app ya tiene panel de ajustes (`/api/pref`, lista blanca).
-- Pendiente fase 1: comandos extra (evac, find…), programación semanal (`cleanSchedule`), `openOnly`, `childLock`, historial local de misiones, mantenimiento/salud; sin tocar Wi-Fi/idioma sin avisar.
+## Web app (`app/`)
+Node (express + ws + mqtt). `node server.js --mock` prueba sin robot; sin `--mock` exige `ROBOT_IP` y `ROBOT_BLID`. Solo escucha en 127.0.0.1 (sin autenticación). Tiene: control (limpiar, pausa, reanudar, parar, base, buscar), ajustes (lista blanca en `/api/pref`), programación semanal (`/api/schedule`), estado y mantenimiento (`/api/maintenance`), historial de misiones propio (`/api/history`, guarda en `app/data/`, solo registra desde que corre; sin probar con misión real). Dato dudoso no mostrado: `bbmssn.aMssnM` (unidad desconocida).
 
-## Datos locales (no están en git)
-BLID, IP y MAC reales del robot: `LOCAL-NOTES.md` (ignorado por git). Scripts y servidor leen `ROBOT_IP` y `ROBOT_BLID` del entorno. La contraseña está en `research/robot-password.txt` (ignorado).
-
-## Estado al pausar (2026-10-22)
-Pausado a petición del usuario. Robot dejado como estaba (ajustes y programación originales verificados, en la base cargando). Hecho: web app con control, ajustes (twoPass, rankOverlap, binPause, openOnly, childLock), buscar, programación semanal, mantenimiento e historial. Pendiente: mapas (pmaps bloqueado; ver análisis de `libcore_jni.so`), comandos extra (evac), historial verificado con misión real, `dispLight`, clon completo de la app.
+## Pendiente
+1. Mapas: ver cómo se activa `optFeats.pmaps` (analizar `libcore_jni.so`/`libcore_base.so` y la API de descubrimiento) y reconstruir mapa con telemetría `vslam`. Si implica suplantar el modelo del robot o saltarse la autenticación de la nube, parar y consultar al usuario; leer lo que la app oficial ya hace con su cuenta es aceptable.
+2. Comandos extra (vaciar depósito `evac`), probar `dispLight`, historial con una misión real, significado de `rankOverlap` (15/25/67/85) y de `aMssnM`.
+3. Clon completo de la app (ver fases en `research/inventory/roadmap.md`) y después "ir más allá".
 
 ## Decisiones del usuario
-- Permitido el descubrimiento UDP en su red.
-- Contraseña por método local (botón HOME ~2 s con el robot en la base): avisarle para que pulse el botón.
+- Permitido el descubrimiento UDP en su red y probar ajustes inofensivos con restauración.
 - Solo 1 conexión local simultánea: la app oficial queda en modo cloud mientras la web está conectada.
-- No continuar con el desarrollo hasta que REA funcione en la sesión.
-
-## Siguientes pasos
-1. Comprobar que las herramientas de REA están disponibles en la sesión.
-2. Descubrir el robot (UDP), obtener BLID y contraseña, y leer el estado: ¿publica `pose` y qué `cap` declara?
-3. Backend (Node + mqtt, REST + WebSocket) y frontend de la web app, repartido con workers (Codex para código; no dos workers sobre los mismos archivos).
-4. Si no hay `pose`: analizar el APK de iRobot y su API cloud de mapas (pmaps) con REA + JADX.
-5. Git: cambios a `beta`, merge a `main` solo con confirmación del usuario.
+- Usar workers cuando sean útiles; el código crítico lo escribo yo.
