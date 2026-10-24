@@ -31,3 +31,9 @@ Node (express + ws + mqtt). `node server.js --mock` prueba sin robot; sin `--moc
 - Permitido el descubrimiento UDP en su red y probar ajustes inofensivos con restauración.
 - Solo 1 conexión local simultánea: la app oficial queda en modo cloud mientras la web está conectada.
 - Usar workers cuando sean útiles; el código crítico lo escribo yo.
+
+## Dos vías de trabajo (decisión del usuario, 2026-10-24)
+- **Sin robot** (siempre activa): recopilar la mayor cantidad de recursos e información (APK, nativo, protocolo, inventarios en `research/inventory/`), diseñar y construir la web app contra `--mock`. No conectar al robot.
+- **Con robot** (solo cuando el usuario diga "tenemos acceso a la Roomba"): pruebas reales, con restauración; trabajarlas a fondo en ese momento. Hasta entonces acumular una lista de pruebas pendientes en `research/inventory/pending-robot-tests.md`.
+- LibreRoomba se monta en paralelo: la Roomba sigue con la app y la nube oficiales hasta que el usuario dé todo por definitivo. No tocar `cloudEnv`/`sdiscUrl` antes.
+- agy no puede ejecutar shell en modo no interactivo (reglas de permisos inviables): usarlo para lectura/escritura de archivos; el shell lo ejecuto yo.
