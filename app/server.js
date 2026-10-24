@@ -11,6 +11,7 @@ const { summarize } = require('./maintenance');
 const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
 const { createFakeCloud } = require('./core/fake-cloud');
 const { mergeMissions } = require('./core/mapmerge');
+const { Notifier } = require('./core/notifier');
 
 const mockMode = process.argv.includes('--mock') || process.env.MOCK === '1';
 if (!mockMode && (!process.env.ROBOT_IP || !process.env.ROBOT_BLID)) {
@@ -51,6 +52,8 @@ core.on('auth-recovered', () => console.log('El robot vuelve a aceptar la contra
 
 const AUTH_HELP = 'El robot rechaza la contraseña local (¿se ha vuelto a emparejar?). Con el robot en la base, mantén HOME 2-3 s hasta que parpadee el icono Wi-Fi y ejecuta: node research/get-password.js <ip>. Después reinicia el servidor.';
 const VERSION = require('./package.json').version;
+// Avisos (depósito lleno, misión terminada, errores...): solo transiciones, con antirrebote; en memoria (últimos 50)
+const notifier = new Notifier(core, { authHelp: AUTH_HELP });
 
 function getPath(object, paths) {
   for (const dottedPath of paths) {
@@ -94,6 +97,11 @@ function broadcast() {
 }
 core.on('state', () => { history.observe(core.state); broadcast(); });
 core.on('connected', broadcast);
+// Los avisos viajan por el mismo WebSocket con otra forma ({ notification }); el panel los distingue del resumen de estado
+notifier.on('event', (event) => {
+  const message = JSON.stringify({ notification: event });
+  wss.clients.forEach((client) => { if (client.readyState === client.OPEN) client.send(message); });
+});
 
 // code del RobotError -> estado HTTP
 const STATUS = { offline: 503, invalid: 400, forbidden: 403 };
@@ -119,6 +127,7 @@ app.get('/api/health', (_req, res) => {
   });
 });
 app.get('/api/history', (_req, res) => res.json(history.list()));
+app.get('/api/events', (_req, res) => res.json(notifier.list()));   // últimos 50 avisos, el más reciente primero
 
 // Nube de iRobot (solo lectura, con la sesión de research/cloud/login.js). En --mock se usa una nube simulada.
 const cloud = mockMode ? createFakeCloud() : createCloud({ cacheDir: path.join(__dirname, 'data') });

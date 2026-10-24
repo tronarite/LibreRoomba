@@ -73,5 +73,5 @@ for (const key of PREF_KEYS) {
   input.addEventListener('change', () => setPref(key, input.type === 'checkbox' ? input.checked : input.type === 'text' ? input.value : Number(input.value)));
 }
 buttons.forEach((button) => button.addEventListener('click', () => { if (button.dataset.confirm && !confirm(button.dataset.confirm)) return; command(button.dataset.command); }));
-function connect() { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; const ws = new WebSocket(`${protocol}://${location.host}/ws`); ws.onmessage = (event) => render(JSON.parse(event.data)); ws.onclose = () => setTimeout(connect, 1500); }
+function connect() { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; const ws = new WebSocket(`${protocol}://${location.host}/ws`); ws.onmessage = (event) => { const data = JSON.parse(event.data); if (data.notification) window.dispatchEvent(new CustomEvent('lr-notification', { detail: data.notification })); else render(data); }; ws.onclose = () => setTimeout(connect, 1500); }
 connect();

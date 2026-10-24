@@ -27,9 +27,16 @@ Con una sesión creada una vez por ti en tu terminal (`node research/cloud/login
 - `GET /api/cloud/history`: misiones normalizadas (resultado, duración, m², vaciados), de la más reciente a la más antigua.
 - `GET /api/cloud/map[?limit=N]`: mapa fusionado de las últimas N misiones (60 por defecto). Cada misión se alinea por la **pose y la orientación de la base**: el robot arranca con una orientación algo distinta cada vez (~0,1 rad en datos reales) y solo trasladar desenfoca varios metros. Devuelve rejilla en base64 (número de misiones por celda de 0,105 m), zonas con atascos repetidos y totales por tipo. Con `--mock` usa una nube simulada.
 
+## Avisos y errores
+- `app/core/errors.js`: `describe(código, idioma, {robot})` devuelve título, mensaje (causa y acción) y aviso corto con los **textos de la app oficial** (tabla `error-table.json` generada del APK con `node research/tools/extract-errors.js`; ver `research/inventory/error-codes.md`). Un código sin texto da «Error N: sin descripción» (`known:false`), nunca inventa.
+- `app/core/notifier.js`: convierte los cambios del estado en avisos: depósito lleno, misión terminada (con duración) o detenida, error del robot (con su texto), robot atascado, batería baja (<15 % sin cargar, con rearme), robot desconectado/reconectado y contraseña rechazada/aceptada. Solo avisa de **transiciones**: el estado inicial no genera avisos; cada tipo lleva antirrebote y los cortes de menos de 5 s no se avisan.
+- `GET /api/events`: últimos 50 avisos (el más reciente primero). Los avisos nuevos también viajan por el WebSocket como `{ "notification": {...} }`.
+- Panel: tarjeta «Avisos» (lista accesible, `role="log"`, la gravedad va en el texto) y botón opcional «Activar avisos del navegador» (Notification API, sin sonido, solo con la pestaña oculta; se activa con un clic y se recuerda en `localStorage`).
+- Sin resolver: los códigos `notReady`/`condNotReady` y los de la base (5xx) y el vaciado automático (350-360) no están integrados.
+
 ## Datos del robot
 La IP, el BLID y la contraseña son datos privados y no están en el repositorio. La contraseña se obtiene con `research/get-password.js <ip>` (mantener HOME hasta que parpadee el icono Wi-Fi).
 
 ## Pruebas y funciones experimentales
-- `npm test` ejecuta las pruebas (núcleo, historial, firma SigV4 con el vector oficial de AWS, cliente de la nube con `fetch` falso, fusión de mapas con datos sintéticos, descubrimiento con un respondedor UDP en 127.0.0.1, arranque y servidor en `--mock`; puertos 3191-3193; no tocan el robot ni la red real). Con `--mock`, `MOCK_AUTH_FAIL=1` simula un robot que rechaza la contraseña.
+- `npm test` ejecuta las pruebas (núcleo, historial, firma SigV4 con el vector oficial de AWS, cliente de la nube con `fetch` falso, fusión de mapas con datos sintéticos, descubrimiento con un respondedor UDP en 127.0.0.1, arranque, errores, avisos con secuencias del robot simulado y servidor en `--mock`; puertos 3191-3193; no tocan el robot ni la red real). Con `--mock`, `MOCK_AUTH_FAIL=1` simula un robot que rechaza la contraseña.
 - Funciones sin probar en el robot: `odoaMode`, `suctionLevel`, `chrgLrPtrn` (cerradas por defecto: el servidor responde 403 salvo con `LIBREROOMBA_EXPERIMENTAL=1`; en `--mock` están abiertas, salvo `LIBREROOMBA_EXPERIMENTAL=0`). `evac` ya está probado y es un botón normal con confirmación; `dispLight` no funciona en la i1+. Lista de pruebas pendientes: `research/inventory/pending-robot-tests.md`.

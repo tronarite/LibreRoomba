@@ -61,6 +61,13 @@
       <label class="row"><span>Nivel de succión 0-3 (suctionLevel)</span><input type="number" min="0" max="3" step="1" data-exp-key="suctionLevel"></label>
       <label class="row"><span>Patrón de luz de carga 0-3 (chrgLrPtrn)</span><input type="number" min="0" max="3" step="1" data-exp-key="chrgLrPtrn"></label>
     </section>
+    <section class="card" aria-labelledby="events-title">
+      <h2 id="events-title">Avisos</h2>
+      <p id="events-empty" class="cloud-msg">Todavía no hay avisos.</p>
+      <ul id="events-list" class="events" role="log" aria-live="polite" aria-relevant="additions"></ul>
+      <button type="button" id="events-browser" class="secondary" hidden>Activar avisos del navegador</button>
+      <p id="events-browser-msg" class="cloud-msg" role="status"></p>
+    </section>
     <section class="card" aria-labelledby="cloud-history-title">
       <h2 id="cloud-history-title">Historial de la nube de iRobot</h2>
       <p id="cloud-history-msg" class="cloud-msg" role="status">Cargando…</p>
@@ -88,6 +95,7 @@
     </section>
   </main>
   <script src="app.js"></script>
+  <script src="events.js"></script>
   <script src="maintenance.js"></script>
   <script src="history.js"></script>
   <script src="schedule.js"></script>
