@@ -67,4 +67,5 @@ async function main() {
   try { console.log('estructura:', shape(JSON.parse(text))); } catch (_) { console.log('respuesta no JSON (primeros 160):', text.slice(0, 160).replace(/[0-9A-F]{32}/g, '<id>')); }
 }
 
-main().catch((error) => { console.error('Error:', error.message); process.exit(1); });
+if (require.main === module) main().catch((error) => { console.error('Error:', error.message); process.exit(1); });
+module.exports = { signedHeaders, SAFE };
