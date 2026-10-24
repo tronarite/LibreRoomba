@@ -16,6 +16,9 @@
       }
       for (const mission of missions) {
         const row = document.createElement('tr');
+        if (mission.unobserved) {   // misiones ocurridas con el servidor apagado: solo se sabe cuántas
+          const td = cell(`${new Date(mission.detectedAt).toLocaleString('es-ES')}: ${mission.count} misión(es) sin registrar (el servidor estaba apagado)`); td.colSpan = 5; row.append(td); body.append(row); continue;
+        }
         const bat = `${mission.batStart ?? '—'}% → ${mission.batEnd ?? '—'}%`;
         const cycle = mission.errorFinal ? `${mission.cycle || '—'} (Error ${mission.errorFinal})` : mission.cycle || '—';
         row.append(cell(new Date(mission.startedAt).toLocaleString('es-ES')), cell(`${mission.durationMin ?? '—'} min`), cell(cycle), cell(bat), cell(m2(mission.sqftDelta)));

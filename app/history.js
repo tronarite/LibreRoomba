@@ -13,6 +13,12 @@ function createHistory(filePath) {
     missions = [];
   }
 
+  // Contador de misiones de por vida del robot (bbmssn.nMssn), guardado aparte: detecta las que ocurrieron con el servidor apagado.
+  const metaPath = `${filePath}.meta`;
+  let lastCount = null;
+  try { const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')); if (Number.isInteger(meta.lastCount)) lastCount = meta.lastCount; } catch (_) { /* sin contador previo */ }
+  let checkedStartup = false;
+
   let current = null;
   let endTimer = null;
 
@@ -25,6 +31,28 @@ function createHistory(filePath) {
     } catch (_) {
       // Sin disco no hay historial persistente, pero el servidor sigue funcionando.
     }
+  }
+
+  function saveMeta() {
+    try {
+      fs.mkdirSync(path.dirname(metaPath), { recursive: true });
+      fs.writeFileSync(metaPath, JSON.stringify({ lastCount }));
+    } catch (_) { /* igual que save() */ }
+  }
+
+  // Primera lectura tras arrancar: si el contador subió respecto a lo guardado, hubo misiones que no vimos.
+  function trackCount(state, now) {
+    const n = state && state.bbmssn && state.bbmssn.nMssn;
+    if (!Number.isInteger(n)) return;
+    if (!checkedStartup) {
+      checkedStartup = true;
+      if (lastCount !== null && n > lastCount) {
+        missions.unshift({ unobserved: true, count: n - lastCount, detectedAt: new Date(now).toISOString(), fromCount: lastCount, toCount: n });
+        missions = missions.slice(0, MAX);
+        save();
+      }
+    }
+    if (n !== lastCount) { lastCount = n; saveMeta(); }
   }
 
   function finish(state, now) {
@@ -49,6 +77,7 @@ function createHistory(filePath) {
   }
 
   function observe(state, now = Date.now()) {
+    trackCount(state, now);
     const status = (state && state.cleanMissionStatus) || {};
     const bbrun = (state && state.bbrun) || {};
     const running = status.phase === 'run';
