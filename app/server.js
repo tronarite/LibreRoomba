@@ -5,6 +5,7 @@ const express = require('express');
 const { WebSocketServer } = require('ws');
 const { RobotCore } = require('./core/robot');
 const { createFakeRobot } = require('./core/fake-robot');
+const { discover } = require('./core/discovery');
 const { createHistory } = require('./history');
 const { summarize } = require('./maintenance');
 
@@ -26,16 +27,27 @@ function robotPassword() {
 const history = createHistory(path.join(__dirname, 'data', 'history.json'));
 let core;
 if (mockMode) {
-  core = new RobotCore({ ip: 'mock', blid: 'mock', password: 'mock', connect: createFakeRobot().connect, experimental: EXPERIMENTAL });
+  // MOCK_AUTH_FAIL=1 (solo con --mock, para pruebas): el robot simulado rechaza la contraseña.
+  const fake = createFakeRobot({ password: process.env.MOCK_AUTH_FAIL === '1' ? 'otra' : undefined });
+  core = new RobotCore({ ip: 'mock', blid: 'mock', password: 'mock', connect: fake.connect, experimental: EXPERIMENTAL });
 } else {
   let password;
   try { password = robotPassword(); } catch (_) {
     console.error('No se pudo leer la contraseña del robot. Configure ROBOT_PASSWORD o el archivo indicado.');
     process.exit(1);
   }
-  core = new RobotCore({ ip: process.env.ROBOT_IP, blid: process.env.ROBOT_BLID, password, experimental: EXPERIMENTAL });
+  // LIBREROOMBA_DISCOVER=1: si el robot deja de responder, buscar su IP nueva por UDP (puerto 5678) filtrando por BLID.
+  const blid = process.env.ROBOT_BLID;
+  const discovering = process.env.LIBREROOMBA_DISCOVER === '1' ? () => discover({ blid }) : null;
+  core = new RobotCore({ ip: process.env.ROBOT_IP, blid, password, experimental: EXPERIMENTAL, discover: discovering });
+  core.on('ip-changed', ({ to }) => console.log(`El robot cambió de IP; ahora responde en ${to}.`));
 }
 core.on('error', (error) => console.error('Error MQTT:', error.message));
+core.on('auth-failed', () => console.error(AUTH_HELP));
+core.on('auth-recovered', () => console.log('El robot vuelve a aceptar la contraseña.'));
+
+const AUTH_HELP = 'El robot rechaza la contraseña local (¿se ha vuelto a emparejar?). Con el robot en la base, mantén HOME 2-3 s hasta que parpadee el icono Wi-Fi y ejecuta: node research/get-password.js <ip>. Después reinicia el servidor.';
+const VERSION = require('./package.json').version;
 
 function getPath(object, paths) {
   for (const dottedPath of paths) {
@@ -49,6 +61,8 @@ function summary() {
   const state = core.state;
   return {
     connected: core.connected,
+    authFailed: core.authFailed,
+    authHelp: core.authFailed ? AUTH_HELP : null,
     batPct: getPath(state, ['batPct', 'battery.batPct']),
     phase: getPath(state, ['cleanMissionStatus.phase']),
     cycle: getPath(state, ['cleanMissionStatus.cycle']),
@@ -93,6 +107,14 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/state', (_req, res) => res.json(summary()));
+// Para vigilar el servicio: ok = conectado y con contraseña válida. ageSeconds = antigüedad del último estado recibido.
+app.get('/api/health', (_req, res) => {
+  const age = core.lastUpdate ? Math.round((Date.now() - Date.parse(core.lastUpdate)) / 1000) : null;
+  res.status(core.connected ? 200 : 503).json({
+    ok: core.connected && !core.authFailed, connected: core.connected, authFailed: core.authFailed,
+    ageSeconds: age, mock: mockMode, version: VERSION, uptimeSeconds: Math.round(process.uptime())
+  });
+});
 app.get('/api/history', (_req, res) => res.json(history.list()));
 app.get('/api/maintenance', (_req, res) => res.json(summarize(core.state)));
 app.get('/api/raw', (_req, res) => res.json(core.state));

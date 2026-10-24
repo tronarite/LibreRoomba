@@ -12,7 +12,8 @@ function render(data) {
   document.querySelector('#battery-value').textContent = Number.isFinite(data.batPct) ? `${battery}%` : '—';
   document.querySelector('#battery-bar').style.width = `${Math.max(0, Math.min(100, battery))}%`;
   const connection = document.querySelector('#connection');
-  connection.textContent = data.connected ? 'Conectada' : 'Desconectada'; connection.classList.toggle('online', !!data.connected);
+  connection.textContent = data.connected ? 'Conectada' : data.authFailed ? 'Contraseña rechazada' : 'Desconectada'; connection.classList.toggle('online', !!data.connected);
+  const auth = document.querySelector('#auth'); auth.textContent = data.authFailed ? data.authHelp || 'El robot rechaza la contraseña local.' : ''; auth.classList.toggle('hidden', !data.authFailed);
   const error = document.querySelector('#error'); const hasError = data.error && data.error !== 0;
   error.textContent = hasError ? `Error del robot: ${data.error}` : ''; error.classList.toggle('hidden', !hasError);
   document.querySelector('#bin').classList.toggle('hidden', !data.bin?.full);

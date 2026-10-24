@@ -44,3 +44,33 @@ test('experimentales cerrados con LIBREROOMBA_EXPERIMENTAL=0', async (t) => {
   assert.equal((await post(`${s.url}/api/experimental/pref`, { key: 'odoaMode', value: true })).status, 403);
   assert.equal((await (await fetch(`${s.url}/api/state`)).json()).experimental, false);
 });
+
+test('/api/health: conectado y sano en mock, con versión y antigüedad del estado', async (t) => {
+  const s = start(3192); t.after(() => s.child.kill()); await s.ready;
+  const response = await fetch(`${s.url}/api/health`);
+  assert.equal(response.status, 200);
+  const health = await response.json();
+  assert.equal(health.ok, true);
+  assert.equal(health.connected, true);
+  assert.equal(health.authFailed, false);
+  assert.equal(health.mock, true);
+  assert.match(health.version, /^[0-9]+[.][0-9]+[.][0-9]+$/);
+  assert.ok(health.ageSeconds >= 0 && health.ageSeconds < 30);
+  assert.ok(health.uptimeSeconds >= 0);
+  assert.equal('blid' in health || 'ip' in health || 'password' in health, false);
+});
+
+test('contraseña rechazada: /api/state y /api/health lo reflejan, con ayuda, y las órdenes dan 503', async (t) => {
+  const s = start(3193, { MOCK_AUTH_FAIL: '1' }); t.after(() => s.child.kill()); await s.ready;
+  let state;
+  for (let i = 0; i < 50; i += 1) { state = await (await fetch(`${s.url}/api/state`)).json(); if (state.authFailed) break; await new Promise((r) => setTimeout(r, 50)); }
+  assert.equal(state.authFailed, true);
+  assert.equal(state.connected, false);
+  assert.match(state.authHelp, /get-password/);
+  const health = await fetch(`${s.url}/api/health`);
+  assert.equal(health.status, 503);
+  const body = await health.json();
+  assert.equal(body.ok, false);
+  assert.equal(body.authFailed, true);
+  assert.equal((await post(`${s.url}/api/cmd`, { command: 'start' })).status, 503);
+});
