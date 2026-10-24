@@ -1,5 +1,6 @@
 const phases = { charge: 'Cargando', run: 'Limpiando', hmUsrDock: 'Volviendo a la base', stop: 'Detenida', pause: 'En pausa', evac: 'Vaciando depósito', stuck: 'Atascada' };
 const buttons = [...document.querySelectorAll('[data-command]')];
+const PREF_KEYS = ['twoPass', 'binPause', 'openOnly', 'childLock', 'rankOverlap', 'ecoCharge', 'schedHold', 'binTypeDetect', 'name'];
 let current = {};
 
 function render(data) {
@@ -15,7 +16,7 @@ function render(data) {
   const error = document.querySelector('#error'); const hasError = data.error && data.error !== 0;
   error.textContent = hasError ? `Error del robot: ${data.error}` : ''; error.classList.toggle('hidden', !hasError);
   document.querySelector('#bin').classList.toggle('hidden', !data.bin?.full);
-  for (const key of ['twoPass', 'binPause', 'openOnly', 'childLock', 'rankOverlap']) {
+  for (const key of PREF_KEYS) {
     const input = document.querySelector(`#pref-${key}`); const value = data.prefs?.[key];
     input.disabled = !data.connected || value === undefined;
     if (document.activeElement !== input && value !== undefined) { if (input.type === 'checkbox') input.checked = !!value; else input.value = String(value); }
@@ -32,9 +33,9 @@ async function setPref(key, value) {
   try { const response = await fetch('/api/pref', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ key, value }) }); if (!response.ok) throw new Error(); }
   catch (_) { alert('No se pudo cambiar el ajuste.'); }
 }
-for (const key of ['twoPass', 'binPause', 'openOnly', 'childLock', 'rankOverlap']) {
+for (const key of PREF_KEYS) {
   const input = document.querySelector(`#pref-${key}`);
-  input.addEventListener('change', () => setPref(key, input.type === 'checkbox' ? input.checked : Number(input.value)));
+  input.addEventListener('change', () => setPref(key, input.type === 'checkbox' ? input.checked : input.type === 'text' ? input.value : Number(input.value)));
 }
 buttons.forEach((button) => button.addEventListener('click', () => command(button.dataset.command)));
 function connect() { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; const ws = new WebSocket(`${protocol}://${location.host}/ws`); ws.onmessage = (event) => render(JSON.parse(event.data)); ws.onclose = () => setTimeout(connect, 1500); }

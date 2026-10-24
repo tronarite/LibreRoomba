@@ -14,7 +14,8 @@ const HOST = process.env.HOST || '127.0.0.1';
 const mockMode = process.argv.includes('--mock') || process.env.MOCK === '1';
 const COMMANDS = new Set(['start', 'stop', 'pause', 'resume', 'dock', 'find']);
 // Ajustes verificados en el robot (research/inventory/roadmap.md): el robot los acepta en el topic delta.
-const PREFS = { twoPass: (v) => typeof v === 'boolean', binPause: (v) => typeof v === 'boolean', openOnly: (v) => typeof v === 'boolean', childLock: (v) => typeof v === 'boolean', rankOverlap: (v) => [15, 25, 67, 85].includes(v) };
+const PREFS = { twoPass: (v) => typeof v === 'boolean', binPause: (v) => typeof v === 'boolean', openOnly: (v) => typeof v === 'boolean', childLock: (v) => typeof v === 'boolean', rankOverlap: (v) => [15, 25, 67, 85].includes(v), ecoCharge: (v) => typeof v === 'boolean', schedHold: (v) => typeof v === 'boolean', binTypeDetect: (v) => typeof v === 'boolean', name: (v) => typeof v === 'string' && /^[^\x00-\x1f]{1,20}$/.test(v.trim()) };
+const PREF_TRANSFORM = { binTypeDetect: (v) => Number(v), name: (v) => v.trim() };   // el robot guarda binTypeDetect como 0/1
 const express = require('express');
 const mqtt = require('mqtt');
 const { WebSocketServer } = require('ws');
@@ -65,7 +66,7 @@ function summary() {
     name: getPath(state, ['name']),
     softwareVer: getPath(state, ['softwareVer']),
     mssnM: getPath(state, ['mssnM']),
-    prefs: { twoPass: state.twoPass, rankOverlap: state.rankOverlap, binPause: state.binPause, openOnly: state.openOnly, childLock: state.childLock },
+    prefs: { twoPass: state.twoPass, rankOverlap: state.rankOverlap, binPause: state.binPause, openOnly: state.openOnly, childLock: state.childLock, ecoCharge: state.ecoCharge, schedHold: state.schedHold, binTypeDetect: state.binTypeDetect, name: state.name },
     rssi: getPath(state, ['rssi', 'wifi.rssi', 'wifistat.rssi']),
     lastUpdate
   };
@@ -199,7 +200,7 @@ app.post('/api/pref', (req, res) => {
   const { key, value } = req.body || {};
   if (!Object.hasOwn(PREFS, key) || !PREFS[key](value)) return res.status(400).json({ error: 'Ajuste no válido' });
   try {
-    sendPref(key, value);
+    sendPref(key, PREF_TRANSFORM[key] ? PREF_TRANSFORM[key](value) : value);
     res.json({ ok: true });
   } catch (error) {
     res.status(503).json({ error: error.message });
