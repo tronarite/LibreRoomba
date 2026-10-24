@@ -33,3 +33,6 @@
 - Conclusión: el bloqueo es de cuenta/nube. Activarlo implicaría tocar el switch de la cuenta o suplantar al cliente: parar y consultar al usuario.
 - Pendiente de probar (solo local, reversible): enviar `{"state":{"pmapCL":true}}` por `delta` y observar `optFeats`.
 - Probado 2026-10-24 (`research/test-pmapcl.js`): `{"pmapCL":true}` por `delta` y por shadow `desired` es ignorado; `optFeats.pmaps.enabled` sigue false, `cap.pmaps` null. Confirma que el bloqueo es de cuenta/nube.
+- Probado 2026-10-24 (`research/test-prefs3.js`, restaurado): aceptados vía `delta` `ecoCharge`, `schedHold`, `binTypeDetect` (0/1), `name` (texto). Ignorado: `noPP`. Estado completo con `research/dump-state.js`.
+- Estado útil visto: `langs2 {sLang, dLangs.langs[], uLangs:null, aSlots:1}` (hueco para paquete de idioma de usuario: pista para audio), `evacAllowed:true`, `cloudEnv:"prod"`, `svcEndpoints.svcDeplId`, `featureFlags{quietNav,hibLed,...}`.
+- Política (usuario): LibreRoomba se monta en paralelo; el robot sigue con la app/nube oficial hasta que se dé por definitivo. No tocar `cloudEnv`/`sdiscUrl` antes.
