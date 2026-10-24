@@ -19,3 +19,8 @@ Flujo en `research/cloud/login.js` (lo ejecuta el usuario; contraseña oculta) y
 1. Dibujar un mapa fusionando la cobertura de todas las misiones (leyendo cada UMF, solo lectura).
 2. Para que el robot guarde un mapa persistente hay que activar el aprendizaje de mapas en la cuenta: modifica la cuenta en la nube -> pedir permiso al usuario antes.
 3. Para no depender de la nube: averiguar cómo sube el robot el mapa (canal AWS IoT/HTTPS) y si se puede recibir en local.
+
+## Interruptor de mapas (2026-10-24, con permiso expreso del usuario)
+- Gigya `accounts.getAccountInfo` (sesión guardada por login.js; firma de sesión estilo OAuth1 en `research/cloud/account.js`): la cuenta solo tenía 4 campos `data` (oracleOptIn, COMMERCIAL_MESSAGE_OPTIN, HKC_NOTIFICATION_CENTER_FSW, oracleContactID); los `*_FSW` guardan una marca de tiempo (texto). `getSchema`: `PMAP_CL_FSW` es `clientModify` (el usuario puede escribirlo); `USER_OPTIN_PMAPS_LEARNING_FSW` no está en el esquema.
+- Prueba: `PMAP_CL_FSW = "<epoch>"` escrito con `setAccountInfo` (`research/cloud/set-flag.js set`), robot observado ~1 min y luego `pmapLearningAllowed`/`pmapCL` por delta y desired: **sin ningún efecto** (`optFeats.pmaps.enabled:false`, `pmapLearningAllowed:false`, `cap.pmaps:null`). Cambio **revertido** (`set-flag.js restore`: el campo no existía y se borró).
+- Conclusión: el mapa persistente (Imprint) está limitado por la capacidad del robot (`cap.pmaps: null`, firmware; la i1/i1+ no trae mapeo inteligente), no por la cuenta. El camino viable es el mapa por misión (UMF) de la nube, que sí existe.

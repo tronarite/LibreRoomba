@@ -61,11 +61,36 @@
       <label class="row"><span>Nivel de succión 0-3 (suctionLevel)</span><input type="number" min="0" max="3" step="1" data-exp-key="suctionLevel"></label>
       <label class="row"><span>Patrón de luz de carga 0-3 (chrgLrPtrn)</span><input type="number" min="0" max="3" step="1" data-exp-key="chrgLrPtrn"></label>
     </section>
-    <section class="map"><h2>Mapa (próximamente)</h2></section>
+    <section class="card" aria-labelledby="cloud-history-title">
+      <h2 id="cloud-history-title">Historial de la nube de iRobot</h2>
+      <p id="cloud-history-msg" class="cloud-msg" role="status">Cargando…</p>
+      <div class="table-wrap"><table id="cloud-history-table" class="hidden"><caption class="sr-only">Misiones registradas en la nube de iRobot, de la más reciente a la más antigua</caption><thead><tr><th scope="col">Inicio</th><th scope="col">Duración</th><th scope="col">Resultado</th><th scope="col">Área</th><th scope="col">Vaciados</th></tr></thead><tbody id="cloud-history-body"></tbody></table></div>
+    </section>
+    <section class="card" aria-labelledby="cloud-map-title">
+      <h2 id="cloud-map-title">Mapa de cobertura</h2>
+      <p id="cloud-map-msg" class="cloud-msg" role="status">Cargando…</p>
+      <div id="cloud-map-box" class="hidden">
+        <canvas id="cloud-map" role="img" aria-label="Mapa de cobertura"></canvas>
+        <fieldset class="map-layers"><legend>Capas</legend>
+          <label><input type="checkbox" id="layer-borders"> Contorno de una misión</label>
+          <label><input type="checkbox" id="layer-stalls" checked> Zonas con atascos</label>
+        </fieldset>
+        <ul class="legend" aria-label="Leyenda del mapa">
+          <li><span class="sw sw-low"></span> Pocas misiones pasaron por aquí</li>
+          <li><span class="sw sw-high"></span> Muchas misiones (<span id="map-peak">—</span> como máximo)</li>
+          <li><span class="sw sw-dock"></span> Base de carga</li>
+          <li><span class="sw sw-stall"></span> Zona con atascos repetidos (más grande = más eventos)</li>
+        </ul>
+        <p id="cloud-map-summary" class="cloud-msg"></p>
+        <p id="cloud-map-stalls" class="cloud-msg"></p>
+        <button type="button" id="cloud-map-reload">Actualizar mapa</button>
+      </div>
+    </section>
   </main>
   <script src="app.js"></script>
   <script src="maintenance.js"></script>
   <script src="history.js"></script>
   <script src="schedule.js"></script>
+  <script src="cloud.js"></script>
 </body>
 </html>

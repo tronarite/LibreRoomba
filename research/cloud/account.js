@@ -50,4 +50,5 @@ async function main() {
   if (!wanted.length) console.log('  (el esquema no declara campos con esos nombres)');
 }
 
-main().catch((error) => { console.error('Error:', error.message); process.exit(1); });
+if (require.main === module) main().catch((error) => { console.error('Error:', error.message); process.exit(1); });
+module.exports = { call, SESSION };

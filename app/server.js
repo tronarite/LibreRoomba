@@ -8,6 +8,9 @@ const { createFakeRobot } = require('./core/fake-robot');
 const { discover } = require('./core/discovery');
 const { createHistory } = require('./history');
 const { summarize } = require('./maintenance');
+const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
+const { createFakeCloud } = require('./core/fake-cloud');
+const { mergeMissions } = require('./core/mapmerge');
 
 const mockMode = process.argv.includes('--mock') || process.env.MOCK === '1';
 if (!mockMode && (!process.env.ROBOT_IP || !process.env.ROBOT_BLID)) {
@@ -116,6 +119,46 @@ app.get('/api/health', (_req, res) => {
   });
 });
 app.get('/api/history', (_req, res) => res.json(history.list()));
+
+// Nube de iRobot (solo lectura, con la sesión de research/cloud/login.js). En --mock se usa una nube simulada.
+const cloud = mockMode ? createFakeCloud() : createCloud({ cacheDir: path.join(__dirname, 'data') });
+const CLOUD_STATUS = { 'no-session': 401, expired: 401, invalid: 400, network: 502, http: 502 };
+function cloudFail(res, error) {
+  res.status(CLOUD_STATUS[error.code] || 500).json({ error: error.message, code: error.code || 'internal' });
+}
+let mapCache = { key: null, value: null };
+async function buildCloudMap(limit) {
+  const refs = (await cloud.missionHistory()).map(mapRef).filter(Boolean).slice(0, limit);
+  const key = refs.map((r) => `${r.pmapId}:${r.version}`).join(',');
+  if (mapCache.key === key) return mapCache.value;
+  const maps = [];
+  let next = 0;
+  async function worker() {                                  // 3 descargas a la vez como máximo; los mapas ya vistos salen de la caché en disco
+    while (next < refs.length) {
+      const ref = refs[next++];
+      try { maps.push(await cloud.umf(ref.pmapId, ref.version)); } catch (error) { if (error.code === 'expired' || error.code === 'no-session') throw error; }
+    }
+  }
+  await Promise.all([worker(), worker(), worker()]);
+  const value = mergeMissions(maps);
+  mapCache = { key, value };
+  return value;
+}
+app.get('/api/cloud/status', (_req, res) => res.json(cloud.status()));
+app.get('/api/cloud/history', async (_req, res) => {
+  try {
+    const missions = (await cloud.missionHistory()).map(normalizeMission).sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+    res.json({ missions, total: missions.length });
+  } catch (error) { cloudFail(res, error); }
+});
+app.get('/api/cloud/map', async (req, res) => {
+  try {
+    const limit = Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10) || 60));
+    const map = await buildCloudMap(limit);
+    if (!map) return res.status(404).json({ error: 'Todavía no hay mapas de misiones con base reconocida.', code: 'empty' });
+    res.json(map);
+  } catch (error) { cloudFail(res, error); }
+});
 app.get('/api/maintenance', (_req, res) => res.json(summarize(core.state)));
 app.get('/api/raw', (_req, res) => res.json(core.state));
 app.get('/api/schedule', (_req, res) => res.json(core.state.cleanSchedule2 || []));

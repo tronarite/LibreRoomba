@@ -21,9 +21,15 @@ Opcional: `LIBREROOMBA_DISCOVER=1` hace que, si el robot deja de responder tras 
 
 Si el robot rechaza la contraseña (p. ej. tras volver a emparejarlo), el panel lo indica con la ayuda para renovarla y el servidor reintenta con esperas largas (30 s hasta 5 min). `GET /api/health` devuelve el estado de salud (`ok`, `connected`, `authFailed`, `ageSeconds`, `version`) con 503 si no hay conexión.
 
+## Nube de iRobot (solo lectura): historial y mapa
+Con una sesión creada una vez por ti en tu terminal (`node research/cloud/login.js`; la contraseña la escribes tú y no se guarda) el panel muestra el historial real de la nube y un mapa de cobertura. Sin sesión, o con la sesión caducada, el panel dice cómo crearla. El servidor solo hace GET firmados (AWS SigV4) a rutas de una lista blanca y nunca registra credenciales; los mapas se guardan en `app/data/` (ignorado por git).
+- `GET /api/cloud/status`: si hay sesión y cuándo caduca (sin credenciales).
+- `GET /api/cloud/history`: misiones normalizadas (resultado, duración, m², vaciados), de la más reciente a la más antigua.
+- `GET /api/cloud/map[?limit=N]`: mapa fusionado de las últimas N misiones (60 por defecto). Cada misión se alinea por la **pose y la orientación de la base**: el robot arranca con una orientación algo distinta cada vez (~0,1 rad en datos reales) y solo trasladar desenfoca varios metros. Devuelve rejilla en base64 (número de misiones por celda de 0,105 m), zonas con atascos repetidos y totales por tipo. Con `--mock` usa una nube simulada.
+
 ## Datos del robot
 La IP, el BLID y la contraseña son datos privados y no están en el repositorio. La contraseña se obtiene con `research/get-password.js <ip>` (mantener HOME hasta que parpadee el icono Wi-Fi).
 
 ## Pruebas y funciones experimentales
-- `npm test` ejecuta las pruebas (núcleo, historial, descubrimiento con un respondedor UDP en 127.0.0.1, arranque y servidor en `--mock`; puertos 3191-3193; no tocan el robot ni la red real). Con `--mock`, `MOCK_AUTH_FAIL=1` simula un robot que rechaza la contraseña.
+- `npm test` ejecuta las pruebas (núcleo, historial, firma SigV4 con el vector oficial de AWS, cliente de la nube con `fetch` falso, fusión de mapas con datos sintéticos, descubrimiento con un respondedor UDP en 127.0.0.1, arranque y servidor en `--mock`; puertos 3191-3193; no tocan el robot ni la red real). Con `--mock`, `MOCK_AUTH_FAIL=1` simula un robot que rechaza la contraseña.
 - Funciones sin probar en el robot: `odoaMode`, `suctionLevel`, `chrgLrPtrn` (cerradas por defecto: el servidor responde 403 salvo con `LIBREROOMBA_EXPERIMENTAL=1`; en `--mock` están abiertas, salvo `LIBREROOMBA_EXPERIMENTAL=0`). `evac` ya está probado y es un botón normal con confirmación; `dispLight` no funciona en la i1+. Lista de pruebas pendientes: `research/inventory/pending-robot-tests.md`.

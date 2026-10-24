@@ -74,3 +74,22 @@ test('contraseña rechazada: /api/state y /api/health lo reflejan, con ayuda, y 
   assert.equal(body.authFailed, true);
   assert.equal((await post(`${s.url}/api/cmd`, { command: 'start' })).status, 503);
 });
+
+test('nube simulada (--mock): estado, historial normalizado y mapa fusionado', async (t) => {
+  const s = start(3317);
+  t.after(() => s.child.kill());
+  await s.ready;
+  const status = await (await fetch(`${s.url}/api/cloud/status`)).json();
+  assert.equal(status.hasSession, true);
+  const hist = await (await fetch(`${s.url}/api/cloud/history`)).json();
+  assert.equal(hist.total, 8);
+  assert.deepEqual(Object.keys(hist.missions[0]).sort(), ['areaM2', 'dockedAtStart', 'durationMin', 'evacs', 'hasMap', 'label', 'nMssn', 'result', 'startedAt']);
+  assert.ok(hist.missions.every((m, i, a) => i === 0 || a[i - 1].startedAt >= m.startedAt), 'ordenado de más reciente a más antiguo');
+  assert.ok(!JSON.stringify(hist).includes('mock0'), 'sin ids de mapa en la respuesta pública');
+  const map = await (await fetch(`${s.url}/api/cloud/map`)).json();
+  assert.ok(map.missions >= 6 && map.peak >= 2);
+  assert.equal(Buffer.from(map.grid, 'base64').length, map.width * map.height);
+  assert.ok(map.areaM2 > 10 && map.borders.length === 1 && map.stalls.length >= 1);
+  const limited = await (await fetch(`${s.url}/api/cloud/map?limit=2`)).json();
+  assert.equal(limited.missions, 2);
+});
