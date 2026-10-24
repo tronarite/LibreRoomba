@@ -32,3 +32,4 @@
 - Comandos locales existentes: `{ "pmapLearningAllowed" : %s}` y `{ "pmapCL" : %s}` (la i1 ignoró el primero).
 - Conclusión: el bloqueo es de cuenta/nube. Activarlo implicaría tocar el switch de la cuenta o suplantar al cliente: parar y consultar al usuario.
 - Pendiente de probar (solo local, reversible): enviar `{"state":{"pmapCL":true}}` por `delta` y observar `optFeats`.
+- Probado 2026-10-24 (`research/test-pmapcl.js`): `{"pmapCL":true}` por `delta` y por shadow `desired` es ignorado; `optFeats.pmaps.enabled` sigue false, `cap.pmaps` null. Confirma que el bloqueo es de cuenta/nube.
