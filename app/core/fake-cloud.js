@@ -43,6 +43,11 @@ function createFakeCloud({ missions = 8, now = () => Date.now() } = {}) {
     mock: true,
     status: () => ({ hasSession: true, mock: true, expiresAt: null, robots: [{ name: 'Roomba simulada', sku: 'mock' }] }),
     missionHistory: async () => history,
+    robotParts: async () => ({ robot_id: 'mock', num_parts: 4, parts: [
+      { part_id: '35', minutes_remaining: 420, count_used: 2711, count_remaining: 420 },
+      { part_id: '36', minutes_remaining: 6660, count_used: 2711, count_remaining: 6660 },
+      { part_id: '37', minutes_remaining: 7200, count_used: 11561, count_remaining: 7200 },
+      { part_id: '139', minutes_remaining: 0, count_used: 46921, count_remaining: 0 }] }),
     umf: async (pmapId, version) => {
       const m = /^mock(\d+)$/.exec(pmapId);
       if (!m || !version) throw new CloudError('Mapa no encontrado', 'http', 404);

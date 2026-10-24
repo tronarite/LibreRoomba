@@ -10,6 +10,7 @@ const { createHistory } = require('./history');
 const { summarize } = require('./maintenance');
 const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
 const { createFakeCloud } = require('./core/fake-cloud');
+const { normalizeParts } = require('./core/parts');
 const { mergeMissions } = require('./core/mapmerge');
 const { Notifier } = require('./core/notifier');
 
@@ -159,6 +160,9 @@ app.get('/api/cloud/history', async (_req, res) => {
     const missions = (await cloud.missionHistory()).map(normalizeMission).sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
     res.json({ missions, total: missions.length });
   } catch (error) { cloudFail(res, error); }
+});
+app.get('/api/cloud/parts', async (_req, res) => {
+  try { res.json(normalizeParts(await cloud.robotParts())); } catch (error) { cloudFail(res, error); }
 });
 app.get('/api/cloud/map', async (req, res) => {
   try {

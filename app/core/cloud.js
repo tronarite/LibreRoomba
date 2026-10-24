@@ -9,7 +9,8 @@ const SERVICE = 'execute-api';
 const SAFE = /^[A-Za-z0-9_-]{1,64}$/;
 const ROUTES = {                      // rutas leídas del nativo de la app; %s = BLID, %p = pmapId, %v = versión
   history: '/v1/%s/missionhistory',
-  umf: '/v1/%s/pmaps/%p/versions/%v/umf'
+  umf: '/v1/%s/pmaps/%p/versions/%v/umf',
+  parts: '/v1/robots/%s/parts'
 };
 const HISTORY_TTL_MS = 5 * 60 * 1000;
 const DEFAULT_SESSION = path.resolve(__dirname, '../../research/cloud/session.json');
@@ -45,7 +46,7 @@ function mapRef(m) {
 }
 
 function createCloud({ sessionPath = DEFAULT_SESSION, fetchFn = globalThis.fetch, cacheDir = null, now = () => Date.now() } = {}) {
-  const memory = { history: null };
+  const memory = { history: null, parts: null };
 
   function session() {
     let raw;
@@ -119,7 +120,16 @@ function createCloud({ sessionPath = DEFAULT_SESSION, fetchFn = globalThis.fetch
     return data;
   }
 
-  return { status, missionHistory, umf };
+  // Vida útil de las piezas: caché de 5 minutos en memoria
+  async function robotParts({ refresh = false } = {}) {
+    if (!refresh && memory.parts && now() - memory.parts.at < HISTORY_TTL_MS) return memory.parts.data;
+    const data = await get('parts');
+    if (!data || !Array.isArray(data.parts)) throw new CloudError('Formato inesperado en las piezas de la nube.', 'http');
+    memory.parts = { at: now(), data };
+    return data;
+  }
+
+  return { status, missionHistory, umf, robotParts };
 }
 
 module.exports = { createCloud, CloudError, normalizeMission, mapRef, SAFE };
