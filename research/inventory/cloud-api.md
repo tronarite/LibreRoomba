@@ -29,3 +29,12 @@ Flujo en `research/cloud/login.js` (lo ejecuta el usuario; contraseña oculta) y
 - `GET /v1/robots/%s/parts` (base `httpBaseAuth`): 200. `{robot_id, num_parts, parts[{part_id, counter, minutes_remaining, count_type:"minutes", count_remaining, count_used, counter_category:"replacement", reset_by:"user"}]}`. Tu robot: 4 piezas (ids `35`, `36`, `37`, `139`).
 - Lectura: la pieza `139` tiene 46 921 min usados y 0 restantes (agotada); la `35` tiene 2711 min usados y **420 min restantes** (se agota pronto); `36`: 6660 restantes; `37`: 7200 restantes.
 - El nombre de cada `part_id` NO está en el APK: el catálogo (`MaintenancePartV2`: partName, replaceInterval...) lo baja la app de la nube (ContentStack) y `GET /v1/%s/maintenance/{id}` da 403 con la sesión de usuario. Para saber qué pieza es cada id: compararlo con la pantalla "Salud del robot" de la app oficial. Los contadores se reinician desde la app (ruta de escritura: no usada).
+
+### Piezas identificadas (el usuario las comparó con su app, 2026-10-24)
+| part_id | Pieza | Restante (min) |
+|---|---|---|
+| 35 | Filtro de alta eficiencia | 420 (7 h) |
+| 36 | Cepillo de esquinas y bordes | 6660 (111 h) |
+| 37 | Doble cepillo multisuperficie | 7200 (120 h) |
+| 139 | no se muestra en la app (46 921 min usados, 0 restantes); posiblemente un contador interno | 0 |
+Consecuencia: el cepillo lateral (esquinas y bordes) tiene 111 h de vida, así que los ~170 atascos por misión NO se explican por desgaste del cepillo; queda pelo/suciedad enredados u otra causa. El filtro está a 7 h de agotarse: conviene cambiarlo.
