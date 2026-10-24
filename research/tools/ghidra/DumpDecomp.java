@@ -1,4 +1,4 @@
-// Decompila las funciones cuyo nombre contiene alguno de los patrones (args separados por coma) y las escribe en un archivo.
+// Decompila las funciones cuyo nombre contiene alguno de los patrones (primer arg: patrones separados por +) y las escribe en un archivo.
 import ghidra.app.script.GhidraScript;
 import ghidra.app.decompiler.*;
 import ghidra.program.model.listing.*;
@@ -7,7 +7,7 @@ import java.io.*;
 public class DumpDecomp extends GhidraScript {
   @Override public void run() throws Exception {
     String[] a = getScriptArgs();
-    String[] pats = a[0].split(",");
+    String[] pats = a[0].split("[+]");
     File out = new File(a[1]);
     int max = a.length > 2 ? Integer.parseInt(a[2]) : 60;
     DecompInterface ifc = new DecompInterface();

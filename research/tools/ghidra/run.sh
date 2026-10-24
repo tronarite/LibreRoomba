@@ -2,7 +2,7 @@
 # Análisis y decompilación de los .so de la app con Ghidra en modo headless (sin REA: en Windows REA no analiza ELF arm64).
 # Requiere Ghidra 12.1.x y un JDK 21+ (Ghidra 12.2 pide JDK 25).
 #   run.sh import <libreria.so> <proyecto_dir> <nombre>         importa y analiza (lento; guarda el proyecto)
-#   run.sh dump   <proyecto_dir> <nombre> <programa> <patrones,coma> <salida.c> [max]   decompila funciones cuyo nombre contenga los patrones
+#   run.sh dump   <proyecto_dir> <nombre> <programa> <patron1+patron2> <salida.c> [max]   decompila funciones cuyo nombre contenga los patrones (separador +: Ghidra parte por comas y el .bat de Windows interpreta | como tubería)
 set -euo pipefail
 GHIDRA="${GHIDRA_121_DIR:-/c/Users/MARCELO/Tools/ghidra-121/ghidra_12.1.4_PUBLIC}"
 export JAVA_HOME="${JAVA_HOME_GHIDRA:-/c/Program Files/Java/jdk-21}"
