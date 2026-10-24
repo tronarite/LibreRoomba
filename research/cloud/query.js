@@ -6,7 +6,7 @@ const path = require('path');
 
 const REGION = 'us-east-1';
 const SERVICE = 'execute-api';
-const ALLOWED = { pmaps: '/v1/%s/pmaps?visible=true&activeDetails=2', missionhistory: '/v1/%s/missionhistory', pmaps_all: '/v1/%s/pmaps' };
+const ALLOWED = { pmaps: '/v1/%s/pmaps?visible=true&activeDetails=2', missionhistory: '/v1/%s/missionhistory', pmaps_all: '/v1/%s/pmaps', parts: '/v1/robots/%s/parts' };
 // Rutas con parámetros (solo lectura): <pmapId> y <version> se validan para que no pueda colarse otra ruta
 const PARAMETRIC = {
   versions: ['/v1/%s/pmaps/%p/versions/%v', 'pmapId', 'version'],
