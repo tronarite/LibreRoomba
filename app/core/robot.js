@@ -23,14 +23,24 @@ function deepMerge(target, source) {
 
 function defaultConnect(url, options) { return require('mqtt').connect(url, options); }
 
-// Eventos: 'state' (delta reportado), 'connected' (booleano), 'error' (Error MQTT, informativo).
+const AUTH_ERROR = /bad user ?name or password|not authori[sz]ed|identifier rejected/i;
+
+// Eventos: 'state' (delta reportado), 'connected' (booleano), 'error' (Error MQTT, informativo),
+// 'auth-failed' / 'auth-recovered' (el robot rechaza / vuelve a aceptar la contraseña), 'ip-changed' (descubrimiento).
 class RobotCore extends EventEmitter {
   // connect(url, options) => cliente tipo mqtt.js; se inyecta en pruebas y en el modo simulado.
-  constructor({ ip, blid, password, connect = defaultConnect, experimental = false, reconnect = { min: 1000, max: 30000 } } = {}) {
+  // discover(): opcional, async () => ({ ip }) | null. Se usa tras `discoverAfter` conexiones fallidas seguidas para buscar la IP nueva.
+  // reconnect.authMin/authMax: espera (ms) entre reintentos cuando el robot rechaza la contraseña (no tiene sentido insistir cada segundo).
+  constructor({ ip, blid, password, connect = defaultConnect, experimental = false, reconnect = {}, discover = null, discoverAfter = 3 } = {}) {
     super();
     Object.assign(this, { ip, blid, password, experimental });
     this._connectFn = connect;
-    this._backoff = { ...reconnect, delay: reconnect.min };
+    this._backoff = { min: 1000, max: 30000, authMin: 30000, authMax: 300000, ...reconnect };
+    this._backoff.delay = this._backoff.min;
+    this._discover = discover;
+    this._discoverAfter = discoverAfter;
+    this._failures = 0;
+    this.authFailed = false;
     this.state = {};
     this.connected = false;
     this.lastUpdate = null;
@@ -65,6 +75,8 @@ class RobotCore extends EventEmitter {
     this._client = client;
     client.on('connect', () => {
       this._backoff.delay = this._backoff.min;
+      this._failures = 0;
+      this._setAuthFailed(false);
       this._setConnected(true);
       client.subscribe('#');
     });
@@ -75,15 +87,59 @@ class RobotCore extends EventEmitter {
       } catch (_) { /* topics sin JSON de estado */ }
     });
     client.on('close', () => { this._setConnected(false); this._scheduleReconnect(); });
-    client.on('error', (error) => { this._setConnected(false); this.emit('error', error); });
+    client.on('error', (error) => {
+      if (AUTH_ERROR.test(String(error && error.message))) this._setAuthFailed(true);
+      this._setConnected(false);
+      this.emit('error', error);
+    });
   }
 
   _scheduleReconnect() {
     if (this._stopped || this._timer) return;
-    const delay = this._backoff.delay;
-    this._backoff.delay = Math.min(delay * 2, this._backoff.max);
-    this._timer = setTimeout(() => { if (!this._stopped) this._open(); }, delay);
+    this._failures += 1;
+    const b = this._backoff;
+    // Con la contraseña rechazada el robot sí es alcanzable: espera larga (30 s, doblando hasta 5 min).
+    const delay = this.authFailed ? Math.min(Math.max(b.delay, b.authMin), b.authMax) : b.delay;
+    b.delay = Math.min(delay * 2, this.authFailed ? b.authMax : b.max);
+    this._timer = setTimeout(async () => {
+      if (this._stopped) return;
+      if (this._shouldDiscover()) await this._rediscover();
+      if (!this._stopped) this._open();
+    }, delay);
     if (this._timer.unref) this._timer.unref();
+  }
+
+  _shouldDiscover() {
+    return !!this._discover && !this.authFailed && this._failures >= this._discoverAfter;
+  }
+
+  async _rediscover() {
+    this._failures = 0;
+    try {
+      const found = await this._discover();
+      if (found && found.ip && found.ip !== this.ip) {
+        const previous = this.ip;
+        this.ip = found.ip;
+        this.emit('ip-changed', { from: previous, to: found.ip });
+      }
+    } catch (_) { /* sin descubrimiento se sigue con la IP actual */ }
+  }
+
+  _setAuthFailed(value) {
+    if (this.authFailed === value) return;
+    this.authFailed = value;
+    this.emit(value ? 'auth-failed' : 'auth-recovered');
+  }
+
+  // Tras renovar la contraseña (get-password): se prueba ya, sin esperar al reintento largo.
+  setPassword(password) {
+    this.password = password;
+    if (this._stopped) return;
+    clearTimeout(this._timer);
+    this._timer = null;
+    this._backoff.delay = this._backoff.min;
+    if (this._client) { this._client.removeAllListeners('close'); this._client.end(true); this._client = null; }
+    this._open();
   }
 
   _apply(delta) {

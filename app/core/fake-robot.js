@@ -14,7 +14,7 @@ const PHASE = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 
 
 // opciones: password (si se da, rechaza otras), state (parte del estado inicial), dockDelayMs (tiempo hasta volver a cargar)
 function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
-  const robot = { clients: [], published: [], state: deepMerge(JSON.parse(JSON.stringify(INITIAL)), state) };
+  const robot = { password, clients: [], published: [], state: deepMerge(JSON.parse(JSON.stringify(INITIAL)), state) };
 
   robot.report = (delta) => {
     deepMerge(robot.state, delta);
@@ -33,7 +33,7 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
     };
     client.end = () => { robot.clients = robot.clients.filter((c) => c !== client); setImmediate(() => client.emit('close')); };
     setImmediate(() => {
-      if (password !== undefined && options.password !== password) {
+      if (robot.password !== undefined && options.password !== robot.password) {
         client.emit('error', new Error('Connection refused: Bad username or password'));
         return client.emit('close');
       }
@@ -42,6 +42,9 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
     });
     return client;
   };
+
+  // Simula que el robot cambia su contraseña (p. ej. tras emparejarlo de nuevo): corta a los clientes y rechaza al resto.
+  robot.changePassword = (next) => { robot.password = next; robot.drop(); };
 
   robot.drop = () => { const lost = robot.clients; robot.clients = []; lost.forEach((c) => c.emit('close')); };   // corte de red
 
