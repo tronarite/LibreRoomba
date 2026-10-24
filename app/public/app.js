@@ -23,16 +23,50 @@ function render(data) {
   }
   const enabled = { start: ['charge', 'stop'].includes(phase), pause: phase === 'run', resume: ['stop', 'pause'].includes(phase), stop: ['run', 'pause'].includes(phase), dock: ['run', 'stop', 'pause'].includes(phase), find: true };
   buttons.forEach((button) => button.disabled = !data.connected || !enabled[button.dataset.command]);
+  renderInfo(data); renderExperimental(data);
 }
 
-async function command(command) {
-  try { const response = await fetch('/api/cmd', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ command }) }); if (!response.ok) throw new Error(); }
-  catch (_) { alert('No se pudo enviar el comando.'); }
+let toastTimer;
+function notify(message) {
+  const toast = document.querySelector('#toast');
+  toast.textContent = message; toast.classList.remove('hidden');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.add('hidden'), 6000);
 }
-async function setPref(key, value) {
-  try { const response = await fetch('/api/pref', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ key, value }) }); if (!response.ok) throw new Error(); }
-  catch (_) { alert('No se pudo cambiar el ajuste.'); }
+// POST JSON; si falla, avisa con el motivo que da el servidor (p. ej. "Robot desconectado")
+async function post(url, body, fallback) {
+  try {
+    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!response.ok) { const detail = await response.json().catch(() => ({})); throw new Error(detail.error || fallback); }
+  } catch (error) { notify(error instanceof TypeError ? 'No hay conexión con el servidor de LibreRoomba.' : error.message || fallback); }
 }
+const command = (command) => post('/api/cmd', { command }, 'No se pudo enviar el comando.');
+const setPref = (key, value) => post('/api/pref', { key, value }, 'No se pudo cambiar el ajuste.');
+
+function renderInfo(data) {
+  const info = data.info || {};
+  const rows = [['Versión del software', data.softwareVer], ['SKU', info.sku], ['País', info.country], ['Zona horaria', info.timezone], ['Idioma de voz', info.language],
+    ['Idiomas instalados', info.languagesAvailable?.join(', ')], ['Firmware de la base', info.dockFirmware], ['Entorno de nube', info.cloudEnv], ['Vaciado automático', info.evacAllowed === undefined ? undefined : info.evacAllowed ? 'Permitido' : 'No permitido'],
+    ['Señal Wi‑Fi', Number.isFinite(data.rssi) ? `${data.rssi} dBm` : undefined]];
+  const list = document.querySelector('#info-body'); list.replaceChildren();
+  for (const [label, value] of rows) {
+    const dt = document.createElement('dt'); dt.textContent = label;
+    const dd = document.createElement('dd'); dd.textContent = value === undefined || value === '' ? '—' : String(value);
+    list.append(dt, dd);
+  }
+}
+const expKeys = [...document.querySelectorAll('[data-exp-key]')];
+const expButtons = [...document.querySelectorAll('[data-exp-command]')];
+function renderExperimental(data) {
+  document.querySelector('#experimental').classList.toggle('hidden', !data.experimental);
+  for (const input of expKeys) {
+    const value = data.experimentalPrefs?.[input.dataset.expKey];
+    input.disabled = !data.connected;
+    if (document.activeElement !== input && value !== undefined) { if (input.type === 'checkbox') input.checked = !!value; else input.value = String(value); }
+  }
+  expButtons.forEach((button) => button.disabled = !data.connected);
+}
+expKeys.forEach((input) => input.addEventListener('change', () => post('/api/experimental/pref', { key: input.dataset.expKey, value: input.type === 'checkbox' ? input.checked : Number(input.value) }, 'No se pudo cambiar el ajuste experimental.')));
+expButtons.forEach((button) => button.addEventListener('click', () => post('/api/experimental/cmd', { command: button.dataset.expCommand }, 'No se pudo enviar el comando experimental.')));
 for (const key of PREF_KEYS) {
   const input = document.querySelector(`#pref-${key}`);
   input.addEventListener('change', () => setPref(key, input.type === 'checkbox' ? input.checked : input.type === 'text' ? input.value : Number(input.value)));

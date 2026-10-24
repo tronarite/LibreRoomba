@@ -16,6 +16,10 @@ const COMMANDS = new Set(['start', 'stop', 'pause', 'resume', 'dock', 'find']);
 // Ajustes verificados en el robot (research/inventory/roadmap.md): el robot los acepta en el topic delta.
 const PREFS = { twoPass: (v) => typeof v === 'boolean', binPause: (v) => typeof v === 'boolean', openOnly: (v) => typeof v === 'boolean', childLock: (v) => typeof v === 'boolean', rankOverlap: (v) => [15, 25, 67, 85].includes(v), ecoCharge: (v) => typeof v === 'boolean', schedHold: (v) => typeof v === 'boolean', binTypeDetect: (v) => typeof v === 'boolean', name: (v) => typeof v === 'string' && /^[^\x00-\x1f]{1,20}$/.test(v.trim()) };
 const PREF_TRANSFORM = { binTypeDetect: (v) => Number(v), name: (v) => v.trim() };   // el robot guarda binTypeDetect como 0/1
+// SIN PROBAR en el robot (research/inventory/pending-robot-tests.md). Solo se aceptan con LIBREROOMBA_EXPERIMENTAL=1 (o en --mock).
+const EXPERIMENTAL = process.env.LIBREROOMBA_EXPERIMENTAL === '1' || (mockMode && process.env.LIBREROOMBA_EXPERIMENTAL !== '0');
+const EXPERIMENTAL_PREFS = { dispLight: (v) => typeof v === 'boolean', odoaMode: (v) => typeof v === 'boolean', suctionLevel: (v) => Number.isInteger(v) && v >= 0 && v <= 3, chrgLrPtrn: (v) => Number.isInteger(v) && v >= 0 && v <= 3 };
+const EXPERIMENTAL_COMMANDS = new Set(['evac']);
 const express = require('express');
 const mqtt = require('mqtt');
 const { WebSocketServer } = require('ws');
@@ -68,6 +72,14 @@ function summary() {
     mssnM: getPath(state, ['mssnM']),
     prefs: { twoPass: state.twoPass, rankOverlap: state.rankOverlap, binPause: state.binPause, openOnly: state.openOnly, childLock: state.childLock, ecoCharge: state.ecoCharge, schedHold: state.schedHold, binTypeDetect: state.binTypeDetect, name: state.name },
     rssi: getPath(state, ['rssi', 'wifi.rssi', 'wifistat.rssi']),
+    // Solo lectura, para la tarjeta "Información" (sin BLID, MAC ni datos de red)
+    info: {
+      sku: state.sku, country: state.country, timezone: state.timezone, cloudEnv: state.cloudEnv,
+      language: getPath(state, ['langs2.sLang']), languagesAvailable: getPath(state, ['langs2.dLangs.langs']),
+      dockFirmware: getPath(state, ['dock.fwVer']), evacAllowed: state.evacAllowed
+    },
+    experimental: EXPERIMENTAL,
+    experimentalPrefs: { dispLight: state.dispLight, odoaMode: state.odoaMode, suctionLevel: state.suctionLevel, chrgLrPtrn: state.chrgLrPtrn },
     lastUpdate
   };
 }
@@ -152,9 +164,10 @@ function connectRobot() {
 }
 
 function mockCommand(command) {
-  const phases = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 'hmUsrDock' };
-  updateState({ cleanMissionStatus: { phase: phases[command], cycle: command === 'dock' ? 'none' : 'clean' } });
-  if (command === 'dock') {
+  const phases = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 'hmUsrDock', evac: 'evac' };
+  if (!phases[command]) return;   // find: sin cambio de fase
+  updateState({ cleanMissionStatus: { phase: phases[command], cycle: command === 'dock' || command === 'evac' ? 'none' : 'clean' } });
+  if (command === 'dock' || command === 'evac') {
     setTimeout(() => updateState({ cleanMissionStatus: { phase: 'charge', cycle: 'none' }, batPct: Math.min(100, (state.batPct || 0) + 1) }), 4000);
   }
 }
@@ -206,6 +219,29 @@ app.post('/api/pref', (req, res) => {
     res.status(503).json({ error: error.message });
   }
 });
+// Funciones sin probar: cerradas salvo LIBREROOMBA_EXPERIMENTAL=1 (o --mock)
+app.post('/api/experimental/pref', (req, res) => {
+  if (!EXPERIMENTAL) return res.status(403).json({ error: 'Funciones experimentales desactivadas (LIBREROOMBA_EXPERIMENTAL=1)' });
+  const { key, value } = req.body || {};
+  if (!Object.hasOwn(EXPERIMENTAL_PREFS, key) || !EXPERIMENTAL_PREFS[key](value)) return res.status(400).json({ error: 'Ajuste no válido' });
+  try {
+    sendPref(key, value);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(503).json({ error: error.message });
+  }
+});
+app.post('/api/experimental/cmd', (req, res) => {
+  if (!EXPERIMENTAL) return res.status(403).json({ error: 'Funciones experimentales desactivadas (LIBREROOMBA_EXPERIMENTAL=1)' });
+  const { command } = req.body || {};
+  if (!EXPERIMENTAL_COMMANDS.has(command)) return res.status(400).json({ error: 'Comando no válido' });
+  try {
+    sendCommand(command);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(503).json({ error: error.message });
+  }
+});
 app.post('/api/cmd', (req, res) => {
   const { command } = req.body || {};
   if (!COMMANDS.has(command)) return res.status(400).json({ error: 'Comando no válido' });
@@ -228,7 +264,9 @@ wss.on('connection', (ws) => ws.send(JSON.stringify(summary())));
 if (mockMode) {
   updateState({
     name: 'Roomba i1+', batPct: 82, softwareVer: 'mock-1.0', mssnM: 0, rssi: -53,
-    bin: { present: true, full: false }, cleanMissionStatus: { phase: 'charge', cycle: 'none', error: 0 }
+    bin: { present: true, full: false }, cleanMissionStatus: { phase: 'charge', cycle: 'none', error: 0 },
+    sku: 'mock-sku', country: 'ES', timezone: 'Europe/Madrid', cloudEnv: 'prod', evacAllowed: true,
+    langs2: { sLang: 'es-ES', dLangs: { langs: ['de-DE', 'en-GB', 'es-ES', 'fr-FR', 'it-IT'] } }, dock: { fwVer: 'mock' }
   });
   setConnected(true);
   console.log('Modo simulado activo: no se conectará al robot.');
