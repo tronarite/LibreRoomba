@@ -46,7 +46,9 @@ async function main() {
   const login = await json(await fetch(`${dep.httpBase}/v2/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }));
   if (!login.credentials || !login.robots) throw new Error(`iRobot no devolvió credenciales (${JSON.stringify(Object.keys(login))}).`);
 
-  fs.writeFileSync(SESSION, JSON.stringify({ savedAt: new Date().toISOString(), deployment: dep, credentials: login.credentials, robots: login.robots }, null, 1), { mode: 0o600 });
+  // sessionInfo de Gigya (token y secreto de sesión): permite a account.js leer los datos de la cuenta sin volver a pedir la contraseña
+  const gigyaSession = gigya.sessionInfo ? { apiKey: disc.gigya.api_key, domain: disc.gigya.datacenter_domain, uid: gigya.UID, sessionToken: gigya.sessionInfo.sessionToken, sessionSecret: gigya.sessionInfo.sessionSecret } : null;
+  fs.writeFileSync(SESSION, JSON.stringify({ savedAt: new Date().toISOString(), deployment: dep, credentials: login.credentials, robots: login.robots, gigya: gigyaSession }, null, 1), { mode: 0o600 });
 
   // 4) Resumen sin secretos
   let local = null;
