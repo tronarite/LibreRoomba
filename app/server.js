@@ -12,14 +12,14 @@ if (!process.env.MOCK && !process.argv.includes('--mock') && (!process.env.ROBOT
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
 const mockMode = process.argv.includes('--mock') || process.env.MOCK === '1';
-const COMMANDS = new Set(['start', 'stop', 'pause', 'resume', 'dock', 'find']);
+const COMMANDS = new Set(['start', 'stop', 'pause', 'resume', 'dock', 'find', 'evac']);
 // Ajustes verificados en el robot (research/inventory/roadmap.md): el robot los acepta en el topic delta.
 const PREFS = { twoPass: (v) => typeof v === 'boolean', binPause: (v) => typeof v === 'boolean', openOnly: (v) => typeof v === 'boolean', childLock: (v) => typeof v === 'boolean', rankOverlap: (v) => [15, 25, 67, 85].includes(v), ecoCharge: (v) => typeof v === 'boolean', schedHold: (v) => typeof v === 'boolean', binTypeDetect: (v) => typeof v === 'boolean', name: (v) => typeof v === 'string' && /^[^\x00-\x1f]{1,20}$/.test(v.trim()) };
 const PREF_TRANSFORM = { binTypeDetect: (v) => Number(v), name: (v) => v.trim() };   // el robot guarda binTypeDetect como 0/1
 // SIN PROBAR en el robot (research/inventory/pending-robot-tests.md). Solo se aceptan con LIBREROOMBA_EXPERIMENTAL=1 (o en --mock).
 const EXPERIMENTAL = process.env.LIBREROOMBA_EXPERIMENTAL === '1' || (mockMode && process.env.LIBREROOMBA_EXPERIMENTAL !== '0');
 const EXPERIMENTAL_PREFS = { odoaMode: (v) => typeof v === 'boolean', suctionLevel: (v) => Number.isInteger(v) && v >= 0 && v <= 3, chrgLrPtrn: (v) => Number.isInteger(v) && v >= 0 && v <= 3 };
-const EXPERIMENTAL_COMMANDS = new Set(['evac']);
+const EXPERIMENTAL_COMMANDS = new Set();
 const express = require('express');
 const mqtt = require('mqtt');
 const { WebSocketServer } = require('ws');

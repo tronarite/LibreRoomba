@@ -21,7 +21,7 @@ function render(data) {
     input.disabled = !data.connected || value === undefined;
     if (document.activeElement !== input && value !== undefined) { if (input.type === 'checkbox') input.checked = !!value; else input.value = String(value); }
   }
-  const enabled = { start: ['charge', 'stop'].includes(phase), pause: phase === 'run', resume: ['stop', 'pause'].includes(phase), stop: ['run', 'pause'].includes(phase), dock: ['run', 'stop', 'pause'].includes(phase), find: true };
+  const enabled = { start: ['charge', 'stop'].includes(phase), pause: phase === 'run', resume: ['stop', 'pause'].includes(phase), stop: ['run', 'pause'].includes(phase), dock: ['run', 'stop', 'pause'].includes(phase), find: true, evac: phase === 'charge' && data.info?.evacAllowed === true };
   buttons.forEach((button) => button.disabled = !data.connected || !enabled[button.dataset.command]);
   renderInfo(data); renderExperimental(data);
 }
@@ -71,6 +71,6 @@ for (const key of PREF_KEYS) {
   const input = document.querySelector(`#pref-${key}`);
   input.addEventListener('change', () => setPref(key, input.type === 'checkbox' ? input.checked : input.type === 'text' ? input.value : Number(input.value)));
 }
-buttons.forEach((button) => button.addEventListener('click', () => command(button.dataset.command)));
+buttons.forEach((button) => button.addEventListener('click', () => { if (button.dataset.confirm && !confirm(button.dataset.confirm)) return; command(button.dataset.command); }));
 function connect() { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; const ws = new WebSocket(`${protocol}://${location.host}/ws`); ws.onmessage = (event) => render(JSON.parse(event.data)); ws.onclose = () => setTimeout(connect, 1500); }
 connect();

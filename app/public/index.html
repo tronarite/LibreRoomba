@@ -22,6 +22,7 @@
         <button data-command="start">Limpiar</button><button data-command="pause">Pausa</button>
         <button data-command="resume">Reanudar</button><button data-command="stop">Parar</button>
         <button data-command="dock">Base</button><button data-command="find">Buscar</button>
+        <button data-command="evac" data-confirm="¿Vaciar el depósito en la base? Hace bastante ruido unos 20 segundos.">Vaciar depósito</button>
       </div>
     </section>
     <section class="card">
@@ -55,7 +56,6 @@
     <section class="card experimental hidden" id="experimental">
       <h2>Experimental</h2>
       <p class="notice">Sin probar en el robot real. Pueden no hacer nada o no reportar su estado.</p>
-      <div class="controls"><button type="button" data-exp-command="evac">Vaciar depósito en la base (evac)</button></div>
       <label class="row"><span>Modo ODOA (odoaMode)</span><input type="checkbox" data-exp-key="odoaMode"></label>
       <label class="row"><span>Nivel de succión 0-3 (suctionLevel)</span><input type="number" min="0" max="3" step="1" data-exp-key="suctionLevel"></label>
       <label class="row"><span>Patrón de luz de carga 0-3 (chrgLrPtrn)</span><input type="number" min="0" max="3" step="1" data-exp-key="chrgLrPtrn"></label>

@@ -27,14 +27,14 @@ test('modo mock: API de ajustes, comandos y experimentales', async (t) => {
   assert.equal((await post(`${s.url}/api/pref`, { key: 'twoPass', value: 'si' })).status, 400);
   assert.equal((await post(`${s.url}/api/pref`, { key: 'name', value: '' })).status, 400);
   assert.equal((await post(`${s.url}/api/pref`, { key: 'cloudEnv', value: 'x' })).status, 400, 'cloudEnv no está en la lista blanca');
-  assert.equal((await post(`${s.url}/api/cmd`, { command: 'evac' })).status, 400, 'evac solo por la ruta experimental');
+  assert.equal((await post(`${s.url}/api/cmd`, { command: 'evac' })).status, 200, 'evac es un comando normal (probado en el robot)');
   assert.equal((await post(`${s.url}/api/cmd`, { command: 'start' })).status, 200);
 
   assert.equal((await post(`${s.url}/api/experimental/pref`, { key: 'suctionLevel', value: 2 })).status, 200);
   assert.equal((await post(`${s.url}/api/experimental/pref`, { key: 'suctionLevel', value: 9 })).status, 400);
-  assert.equal((await post(`${s.url}/api/experimental/cmd`, { command: 'evac' })).status, 200);
+  assert.equal((await post(`${s.url}/api/experimental/cmd`, { command: 'evac' })).status, 400);
   const after = await (await fetch(`${s.url}/api/state`)).json();
-  assert.equal(after.phase, 'evac');
+  assert.equal(after.phase, 'run');
   assert.equal(after.experimentalPrefs.suctionLevel, 2);
 });
 
