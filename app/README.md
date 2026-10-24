@@ -22,4 +22,4 @@ La IP, el BLID y la contraseña son datos privados y no están en el repositorio
 
 ## Pruebas y funciones experimentales
 - `npm test` ejecuta las pruebas del servidor en modo `--mock` (puertos 3191 y 3192; no tocan el robot).
-- Las funciones sin probar en el robot (`evac`, `dispLight`, `odoaMode`, `suctionLevel`, `chrgLrPtrn`) están cerradas por defecto: el servidor responde 403 salvo con `LIBREROOMBA_EXPERIMENTAL=1` (en `--mock` están abiertas, salvo `LIBREROOMBA_EXPERIMENTAL=0`). Lista de pruebas pendientes: `research/inventory/pending-robot-tests.md`.
+- Funciones sin probar en el robot: `odoaMode`, `suctionLevel`, `chrgLrPtrn` (cerradas por defecto: el servidor responde 403 salvo con `LIBREROOMBA_EXPERIMENTAL=1`; en `--mock` están abiertas, salvo `LIBREROOMBA_EXPERIMENTAL=0`). `evac` ya está probado y es un botón normal con confirmación; `dispLight` no funciona en la i1+. Lista de pruebas pendientes: `research/inventory/pending-robot-tests.md`.
