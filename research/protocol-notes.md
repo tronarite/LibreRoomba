@@ -36,3 +36,4 @@
 - Probado 2026-10-24 (`research/test-prefs3.js`, restaurado): aceptados vía `delta` `ecoCharge`, `schedHold`, `binTypeDetect` (0/1), `name` (texto). Ignorado: `noPP`. Estado completo con `research/dump-state.js`.
 - Estado útil visto: `langs2 {sLang, dLangs.langs[], uLangs:null, aSlots:1}` (hueco para paquete de idioma de usuario: pista para audio), `evacAllowed:true`, `cloudEnv:"prod"`, `svcEndpoints.svcDeplId`, `featureFlags{quietNav,hibLed,...}`.
 - Política (usuario): LibreRoomba se monta en paralelo; el robot sigue con la app/nube oficial hasta que se dé por definitivo. No tocar `cloudEnv`/`sdiscUrl` antes.
+- Probado 2026-10-24 con el robot (`research/test-disp.js`): `dispLight` false/true por delta: sin efecto visible ni clave nueva en el estado. No soportado en la i1+.

@@ -41,6 +41,6 @@ test('modo mock: API de ajustes, comandos y experimentales', async (t) => {
 test('experimentales cerrados con LIBREROOMBA_EXPERIMENTAL=0', async (t) => {
   const s = start(3192, { LIBREROOMBA_EXPERIMENTAL: '0' }); t.after(() => s.child.kill()); await s.ready;
   assert.equal((await post(`${s.url}/api/experimental/cmd`, { command: 'evac' })).status, 403);
-  assert.equal((await post(`${s.url}/api/experimental/pref`, { key: 'dispLight', value: true })).status, 403);
+  assert.equal((await post(`${s.url}/api/experimental/pref`, { key: 'odoaMode', value: true })).status, 403);
   assert.equal((await (await fetch(`${s.url}/api/state`)).json()).experimental, false);
 });

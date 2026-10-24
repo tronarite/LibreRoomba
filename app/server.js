@@ -18,7 +18,7 @@ const PREFS = { twoPass: (v) => typeof v === 'boolean', binPause: (v) => typeof 
 const PREF_TRANSFORM = { binTypeDetect: (v) => Number(v), name: (v) => v.trim() };   // el robot guarda binTypeDetect como 0/1
 // SIN PROBAR en el robot (research/inventory/pending-robot-tests.md). Solo se aceptan con LIBREROOMBA_EXPERIMENTAL=1 (o en --mock).
 const EXPERIMENTAL = process.env.LIBREROOMBA_EXPERIMENTAL === '1' || (mockMode && process.env.LIBREROOMBA_EXPERIMENTAL !== '0');
-const EXPERIMENTAL_PREFS = { dispLight: (v) => typeof v === 'boolean', odoaMode: (v) => typeof v === 'boolean', suctionLevel: (v) => Number.isInteger(v) && v >= 0 && v <= 3, chrgLrPtrn: (v) => Number.isInteger(v) && v >= 0 && v <= 3 };
+const EXPERIMENTAL_PREFS = { odoaMode: (v) => typeof v === 'boolean', suctionLevel: (v) => Number.isInteger(v) && v >= 0 && v <= 3, chrgLrPtrn: (v) => Number.isInteger(v) && v >= 0 && v <= 3 };
 const EXPERIMENTAL_COMMANDS = new Set(['evac']);
 const express = require('express');
 const mqtt = require('mqtt');
@@ -79,7 +79,7 @@ function summary() {
       dockFirmware: getPath(state, ['dock.fwVer']), evacAllowed: state.evacAllowed
     },
     experimental: EXPERIMENTAL,
-    experimentalPrefs: { dispLight: state.dispLight, odoaMode: state.odoaMode, suctionLevel: state.suctionLevel, chrgLrPtrn: state.chrgLrPtrn },
+    experimentalPrefs: { odoaMode: state.odoaMode, suctionLevel: state.suctionLevel, chrgLrPtrn: state.chrgLrPtrn },
     lastUpdate
   };
 }
