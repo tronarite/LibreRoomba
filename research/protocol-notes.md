@@ -25,3 +25,10 @@
 - Si el i1+ publica `pose` y qué `cap` declara.
 - Firmware (3.x) y si el cifrado legado sigue válido.
 - BLID/password: mantener HOME ~2 s (suena) con el robot en la base, y ejecutar `get-roomba-password <ip>`.
+
+## Mapas: hallazgos del análisis estático (2026-10-24)
+- `libcore_base.so` define `GigyaConst::kPMapCLFeatureSwitchKey` y la cadena `PMAP_CL_FSW`: el aprendizaje de mapas (pmap CL) se controla con un *feature switch* de la **cuenta de iRobot (Gigya)**, no solo del robot.
+- `MapsCapabilitiesProvider` (`setPMapLearningAllowed`, `getMapCapabilityState`, `updateSettings`) combina ese switch con `optFeats`/`pmapLearningAllowed` del robot; si no se soporta registra "Skipping check for PMapLearningAllowed, it is not supported."
+- Comandos locales existentes: `{ "pmapLearningAllowed" : %s}` y `{ "pmapCL" : %s}` (la i1 ignoró el primero).
+- Conclusión: el bloqueo es de cuenta/nube. Activarlo implicaría tocar el switch de la cuenta o suplantar al cliente: parar y consultar al usuario.
+- Pendiente de probar (solo local, reversible): enviar `{"state":{"pmapCL":true}}` por `delta` y observar `optFeats`.
