@@ -71,7 +71,11 @@ function renderExperimental(data) {
     if (document.activeElement !== input && value !== undefined) { if (input.type === 'checkbox') input.checked = !!value; else input.value = String(value); }
   }
   expButtons.forEach((button) => button.disabled = !data.connected);
+  document.querySelector('#exp-position').disabled = !data.connected;
+  const p = data.position;
+  document.querySelector('#exp-position-text').textContent = p ? `x ${p.x.toFixed(2)}, y ${p.y.toFixed(2)}, ángulo ${p.theta.toFixed(2)} (recibida ${new Date(p.receivedAt).toLocaleTimeString('es-ES')})` : 'Sin posición todavía.';
 }
+document.querySelector('#exp-position').addEventListener('click', () => post('/api/experimental/position', {}, 'No se pudo pedir la posición.'));
 expKeys.forEach((input) => input.addEventListener('change', () => post('/api/experimental/pref', { key: input.dataset.expKey, value: input.type === 'checkbox' ? input.checked : Number(input.value) }, 'No se pudo cambiar el ajuste experimental.')));
 expButtons.forEach((button) => button.addEventListener('click', () => post('/api/experimental/cmd', { command: button.dataset.expCommand }, 'No se pudo enviar el comando experimental.')));
 for (const key of PREF_KEYS) {

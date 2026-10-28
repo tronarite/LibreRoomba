@@ -245,3 +245,20 @@ test('train es una orden normal y arranca un ciclo de reconocimiento', async () 
   assert.equal(c.state.cleanMissionStatus.phase, 'run');
   c.stop();
 });
+
+test('posición: solo con experimental, publica en `req` y guarda la respuesta', async () => {
+  const closed = await setup();
+  await until(() => closed.c.connected && closed.c.state.batPct);
+  assert.throws(() => closed.c.requestPosition(), { code: 'forbidden' });
+  closed.c.stop();
+
+  const { robot, c } = await setup({ core: { experimental: true } });
+  await until(() => c.connected && c.state.batPct);
+  robot.position = { x: 1.5, y: -0.25, theta: 3.1 };
+  const reqId = c.requestPosition();
+  await until(() => c.position);
+  const sent = robot.published.find((p) => p.topic === 'req');
+  assert.equal(sent.body.reqId, reqId);
+  assert.deepEqual([c.position.x, c.position.y, c.position.theta, c.position.pmapId], [1.5, -0.25, 3.1, 'unknown']);
+  c.stop();
+});

@@ -36,12 +36,16 @@ test('modo mock: API de ajustes, comandos y experimentales', async (t) => {
   const after = await (await fetch(`${s.url}/api/state`)).json();
   assert.equal(after.phase, 'run');
   assert.equal(after.experimentalPrefs.suctionLevel, 2);
+  assert.equal((await post(`${s.url}/api/experimental/position`, {})).status, 200);
+  let pos; for (let i = 0; i < 40 && !pos; i++) { await new Promise((r) => setTimeout(r, 50)); pos = (await (await fetch(`${s.url}/api/state`)).json()).position; }
+  assert.deepEqual([pos.x, pos.y, pos.theta], [0, 0, 0], 'el robot simulado responde con la posición de la base');
 });
 
 test('experimentales cerrados con LIBREROOMBA_EXPERIMENTAL=0', async (t) => {
   const s = start(3192, { LIBREROOMBA_EXPERIMENTAL: '0' }); t.after(() => s.child.kill()); await s.ready;
   assert.equal((await post(`${s.url}/api/experimental/cmd`, { command: 'evac' })).status, 403);
   assert.equal((await post(`${s.url}/api/experimental/pref`, { key: 'odoaMode', value: true })).status, 403);
+  assert.equal((await post(`${s.url}/api/experimental/position`, {})).status, 403);
   assert.equal((await (await fetch(`${s.url}/api/state`)).json()).experimental, false);
 });
 

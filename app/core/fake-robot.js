@@ -55,6 +55,12 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000, savingMapMs
 
   function handle(topic, body) {
     if (topic === 'delta') return robot.report(body.state || {});
+    if (topic === 'req') {   // posición: topic y forma de la respuesta inferidos del nativo (sin confirmar en el robot real)
+      const pos = robot.position || { x: 0, y: 0, theta: 0 };
+      const payload = Buffer.from(JSON.stringify({ ver: 1, reqId: body.reqId, reportType: 'current', data: { coords: [{ type: 'robot', xyt: [pos.x, pos.y, pos.theta], ts: Math.floor(Date.now() / 1000), pmap_id: 'unknown' }] } }));
+      for (const client of robot.clients) client.emit('message', 'rrtp/report', payload);
+      return;
+    }
     if (topic !== 'cmd') return;
     if (robot.ignore.has(body.command)) return;   // pruebas: orden que el robot no atiende
     const phase = PHASE[body.command];

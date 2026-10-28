@@ -21,7 +21,12 @@ const EXPERIMENTAL_PREFS = {
 };
 const EXPERIMENTAL_COMMANDS = new Set();
 
+// Petición de posición en tiempo real (RRTP) por el topic local `req`. Plantilla del nativo: { "reqId" : "%s" , "reqType" : "%s" , "conType" : "%s"}.
+// SIN PROBAR en el robot: `reqType: 'current'` es una inferencia y `conType` se desconoce (research/inventory/native-decomp.md). Solo con experimental.
+const POSITION_TOPIC = 'req';
+const POSITION_REQUEST = { reqType: 'current', conType: 'local' };
+
 // Nunca se envían desde LibreRoomba mientras el robot siga con la nube oficial (decisión del usuario).
 const BLOCKED_KEYS = new Set(['cloudEnv', 'sdiscUrl', 'svcEndpoints', 'wlcfg', 'uap', 'wactivate', 'ntphosts']);
 
-module.exports = { COMMANDS, PREFS, PREF_TRANSFORM, EXPERIMENTAL_PREFS, EXPERIMENTAL_COMMANDS, BLOCKED_KEYS };
+module.exports = { POSITION_TOPIC, POSITION_REQUEST, COMMANDS, PREFS, PREF_TRANSFORM, EXPERIMENTAL_PREFS, EXPERIMENTAL_COMMANDS, BLOCKED_KEYS };

@@ -118,6 +118,7 @@ function summary() {
     dnd: dndState().active,
     experimental: EXPERIMENTAL,
     experimentalPrefs: { odoaMode: state.odoaMode, suctionLevel: state.suctionLevel, chrgLrPtrn: state.chrgLrPtrn },
+    position: core.position,
     lastUpdate: core.lastUpdate
   };
 }
@@ -127,6 +128,7 @@ function broadcast() {
   wss.clients.forEach((client) => { if (client.readyState === client.OPEN) client.send(message); });
 }
 core.on('state', () => { history.observe(core.state); broadcast(); });
+core.on('position', broadcast);
 core.on('connected', broadcast);
 dndGuard.on('change', broadcast);
 // Los avisos viajan por el mismo WebSocket con otra forma ({ notification }); el panel los distingue del resumen de estado
@@ -237,6 +239,7 @@ app.post('/api/dnd', (req, res) => {
 app.post('/api/pref', (req, res) => handle(res, () => core.setPref((req.body || {}).key, (req.body || {}).value)));
 app.post('/api/cmd', (req, res) => handle(res, () => core.command((req.body || {}).command)));
 app.post('/api/experimental/pref', (req, res) => handle(res, () => core.setExperimentalPref((req.body || {}).key, (req.body || {}).value)));
+app.post('/api/experimental/position', (_req, res) => handle(res, () => core.requestPosition()));
 app.post('/api/experimental/cmd', (req, res) => handle(res, () => core.experimentalCommand((req.body || {}).command)));
 
 const server = http.createServer(app);

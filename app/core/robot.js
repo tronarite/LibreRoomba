@@ -89,6 +89,7 @@ class RobotCore extends EventEmitter {
       try {
         const message = JSON.parse(payload.toString());
         if (message && message.state && message.state.reported) this._apply(message.state.reported);
+        else this._maybePosition(message);
       } catch (_) { /* topics sin JSON de estado */ }
     });
     client.on('close', () => { this._setConnected(false); this._scheduleReconnect(); });
@@ -210,6 +211,25 @@ class RobotCore extends EventEmitter {
 
   _requireExperimental() {
     if (!this.experimental) throw new RobotError('Funciones experimentales desactivadas (LIBREROOMBA_EXPERIMENTAL=1)', 'forbidden');
+  }
+
+  // Respuesta de posición (sin importar el topic, aún no se conoce): reqId + data.coords[{xyt:[x,y,theta], ts, pmap_id}]
+  _maybePosition(message) {
+    const coords = message && typeof message === 'object' && message.reqId !== undefined && message.data && message.data.coords;
+    if (!Array.isArray(coords) || !coords.length) return;
+    const xyt = coords[0] && coords[0].xyt;
+    if (!Array.isArray(xyt) || xyt.length < 3 || !xyt.every(Number.isFinite)) return;
+    this.position = { x: xyt[0], y: xyt[1], theta: xyt[2], ts: coords[0].ts, pmapId: coords[0].pmap_id, reqId: String(message.reqId), receivedAt: new Date().toISOString() };
+    this.emit('position', this.position);
+  }
+
+  // Pide la posición actual al robot (solo lectura). Experimental: formato sin confirmar.
+  requestPosition() {
+    this._requireExperimental();
+    this._positionSeq = (this._positionSeq || 0) + 1;
+    const reqId = String(this._positionSeq);
+    this._publish(policy.POSITION_TOPIC, { reqId, ...policy.POSITION_REQUEST });
+    return reqId;
   }
 
   setExperimentalPref(key, value) {
