@@ -8,7 +8,7 @@ Principio: LibreRoomba debe funcionar solo con el robot en la red local. La nube
 | Control, ajustes, programación, No molestar, avisos, errores | MQTT local | ninguna | — (hecho) |
 | Historial de misiones | nube (`/api/cloud/history`) + historial propio (`/api/history`) | opcional | historial propio con `bbmssn`; ampliar con área/duración medidas en la misión |
 | Salud de piezas | nube (`/v1/robots/<blid>/parts`) | **sí** | HECHO: contadores locales (`bbrun.hr`) con vida útil configurable (`app/core/localparts.js`, `/api/parts`) |
-| Mapa de cobertura | nube (UMF por misión) | **sí** | mapa propio con la posición pedida al robot (`req` / `umi/req`, `core/localmap.js`); requiere confirmar RRTP con el robot |
+| Mapa de cobertura | nube (UMF por misión) | **sí** | HECHO contra el simulador: mapa propio con la posición pedida al robot (`req`, `core/localmap.js`, `/api/localmap`); falta confirmar RRTP con el robot (formato, topic de respuesta, sistema de coordenadas) |
 | Habitaciones | rectángulos propios; cobertura usa el mapa | parcial | cobertura desde el mapa local |
 | Firmware / OTA | nube de iRobot | **sí** | sin alternativa conocida (paquetes firmados); no bloquear la OTA hasta saberlo |
 | Descubrimiento | UDP local | no | — |

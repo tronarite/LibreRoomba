@@ -11,6 +11,7 @@ const { summarize } = require('./maintenance');
 const { createRooms, measure } = require('./rooms');
 const { createGuard } = require('./core/localguard');
 const { createLocalParts } = require('./core/localparts');
+const { createLocalMap } = require('./core/localmap');
 const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
 const { createFakeCloud } = require('./core/fake-cloud');
 const { normalizeParts } = require('./core/parts');
@@ -37,6 +38,7 @@ function robotPassword() {
 
 const history = createHistory(path.join(__dirname, 'data', 'history.json'));
 const localParts = createLocalParts(process.env.LIBREROOMBA_PARTS_FILE || path.join(__dirname, 'data', 'parts.json'));
+const localMap = createLocalMap(process.env.LIBREROOMBA_LOCALMAP_FILE || path.join(__dirname, 'data', 'localmap.json'));
 const rooms = createRooms(process.env.LIBREROOMBA_ROOMS_FILE || path.join(__dirname, 'data', 'rooms.json'));
 let core;
 if (mockMode) {
@@ -131,6 +133,17 @@ function broadcast() {
 }
 core.on('state', () => { history.observe(core.state); broadcast(); });
 core.on('position', broadcast);
+
+// Mapa propio sin nube: durante una misión se pide la posición cada POSITION_POLL_MS (solo con experimental, formato RRTP sin confirmar en el robot real)
+const POSITION_POLL_MS = Number(process.env.LIBREROOMBA_POSITION_POLL_MS || 2000);
+const missionPhase = () => (core.state.cleanMissionStatus || {}).phase;
+let wasRunning = false;
+core.on('state', () => { const running = missionPhase() === 'run'; if (wasRunning && !running) localMap.endMission(); wasRunning = running; });
+core.on('position', (p) => { if (missionPhase() === 'run') localMap.add(p.x, p.y); });
+if (EXPERIMENTAL) {
+  const poll = setInterval(() => { if (core.connected && missionPhase() === 'run') { try { core.requestPosition(); } catch (_) { /* sin conexión */ } } }, POSITION_POLL_MS);
+  if (poll.unref) poll.unref();
+}
 core.on('connected', broadcast);
 dndGuard.on('change', broadcast);
 // Los avisos viajan por el mismo WebSocket con otra forma ({ notification }); el panel los distingue del resumen de estado
@@ -218,13 +231,13 @@ app.get('/api/cloud/map', async (req, res) => {
 });
 app.get('/api/rooms', async (_req, res) => {
   let map = null;
-  try { map = await buildCloudMap(60); } catch (_) { /* sin nube: se devuelven sin cobertura */ }
+  try { map = localMap.snapshot() || await buildCloudMap(60); } catch (_) { /* sin nube: se devuelven sin cobertura */ }
   res.json({ rooms: measure(rooms.list(), map) });
 });
 app.put('/api/rooms', async (req, res) => {
   try { rooms.set((req.body || {}).rooms); } catch (error) { return res.status(400).json({ error: error.message }); }
   let map = null;
-  try { map = await buildCloudMap(60); } catch (_) { /* igual */ }
+  try { map = localMap.snapshot() || await buildCloudMap(60); } catch (_) { /* igual */ }
   res.json({ rooms: measure(rooms.list(), map) });
 });
 // Piezas sin nube: horas del robot (bbrun.hr) menos las de su instalación
@@ -233,6 +246,11 @@ app.get('/api/parts', (_req, res) => res.json({ parts: localParts.list(runHours(
 app.post('/api/parts/:id', (req, res) => {
   try { res.json({ parts: localParts.update(req.params.id, req.body, runHours()), runHours: runHours() }); }
   catch (error) { res.status(400).json({ error: error.message }); }
+});
+app.get('/api/localmap', (_req, res) => {
+  const map = localMap.snapshot();
+  if (!map) return res.status(404).json({ error: 'Todavía no hay mapa propio: se construye con la posición del robot durante las misiones (experimental).', code: 'empty' });
+  res.json(map);
 });
 app.get('/api/maintenance', (_req, res) => res.json(summarize(core.state)));
 app.get('/api/raw', (_req, res) => res.json(core.state));

@@ -84,11 +84,13 @@
     mapMsg.textContent = 'Cargando el mapa (la primera vez descarga cada misión y puede tardar unos segundos)…';
     mapBox.classList.add('hidden');
     try {
-      const map = await getJson('/api/cloud/map');
+      // Primero el mapa propio (sin nube); si todavía no hay, el de la nube de iRobot
+      let map;
+      try { map = await getJson('/api/localmap'); } catch (error) { if (error.code !== 'empty') throw error; map = await getJson('/api/cloud/map'); }
       state.map = map;
       state.cells = Uint8Array.from(atob(map.grid), (c) => c.charCodeAt(0));
       document.querySelector('#map-peak').textContent = `${map.peak} misiones`;
-      const summary = `${map.missions} misiones alineadas por la base, ${map.areaM2.toFixed(1)} m² recorridos` + (map.skipped ? `; ${map.skipped} omitidas por no tener la base reconocida` : '') + `. La base mira hacia la derecha.`;
+      const summary = (map.source === 'local' ? 'Mapa propio (sin nube): ' : '') + `${map.missions} misiones alineadas por la base, ${map.areaM2.toFixed(1)} m² recorridos` + (map.skipped ? `; ${map.skipped} omitidas por no tener la base reconocida` : '') + `. La base mira hacia la derecha.`;
       document.querySelector('#cloud-map-summary').textContent = summary;
       const totals = Object.entries(map.stallTotals || {}).sort((a, b) => b[1] - a[1]).map(([event, n]) => `${n.toLocaleString('es-ES')} × ${STALL_LABELS[event] || event}`);
       document.querySelector('#cloud-map-stalls').textContent = totals.length ? `Eventos registrados en esas misiones: ${totals.join('; ')}. En el mapa solo se marcan las zonas con atascos repetidos.` : '';
