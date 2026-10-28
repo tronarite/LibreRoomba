@@ -23,3 +23,9 @@ Siempre: guardar valor previo, restaurar, parar la web app antes de scripts de r
 - [ ] Rellenar `info` real en el panel (idiomas, firmware de la base, `evacAllowed`) y comprobar que coincide con `research/dump-state.js`.
 - [ ] Si algo de lo anterior funciona, moverlo de "Experimental" a "Ajustes de limpieza" y a la lista blanca `PREFS`.
 - [x] `gentleMode`/`navStrategy`: descartados por análisis estático (la i1+ no declara la capacidad `gentle`); ver native-decomp.md.
+
+## Posición en tiempo real (solo cuando el usuario dé acceso; solo LECTURAS)
+- [ ] Suscribirse a `#` unos segundos con el robot en la base y en misión: ¿llegan topics distintos de `delta`/`wifistat`?
+- [ ] Publicar en `umi/req` `{"do": "get", "args": ["pose"], "id": 1}` (solo lectura) y ver la respuesta (¿en qué topic?, ¿en la base, sin misión?).
+- [ ] Publicar en `req` `{ "reqId" : "1" , "reqType" : "<a descubrir>" , "conType" : "<a descubrir>"}`: primero buscar los valores posibles en el nativo (comando `GetRobotPosition`).
+- NO probar `drive` (mueve el robot) ni `set` de UMI, `wifictl`, `deployment`, `logUpload`.

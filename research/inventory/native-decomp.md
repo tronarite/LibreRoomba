@@ -25,3 +25,23 @@ Binario: `libcore_base.so` (arm64). REA no analiza ELF arm64 en Windows, por eso
 - Local: `BaseSecureSocketProtocolSerializer` define los topics `kMessageTopicForCommand` (`cmd`), `ForStateChanges`, `ForPackageUpdate`, `ForWifiControl`, `ForWifiLoggingConfiguration`, `ForRobotLoggingConfiguration`, `ForUmiCommands` y **`ForLocalRrtpRequest`**: existe una petición RRTP por el canal local. Los valores de esas constantes no salen en `strings` (literales cortos inline) y los símbolos de datos no se pueden decompilar como funciones; `DumpDecomp.java` filtra por nombre de función, así que habría que leer la inicialización estática (`_GLOBAL__sub_I_*`) o los xrefs al símbolo.
 - Capacidad relacionada: `supportsVSlamNavigation` / `supportsVSLAM` (la i1+ no declara pmaps; la i3 equivalente usa `vslam`).
 - Pendiente (con robot): suscribirse a `#` durante una misión buscando topics distintos de `delta`/`wifistat`, y probar publicar en el topic RRTP local una vez conocido su nombre.
+
+## Topics MQTT locales y posición en tiempo real (2026-10-28, Ghidra sobre `libcore_base.so`, solo análisis estático)
+Valores leídos de `_INIT_163` (constantes de `BaseSecureSocketProtocolSerializer`; strings cortas inline, ya decodificadas):
+
+| Constante | Topic local | Uso |
+|---|---|---|
+| `kMessageTopicForCommand` | `cmd` | órdenes (ya usado) |
+| `kMessageTopicForStateChanges` | `delta` | ajustes (ya usado) |
+| `kMessageTopicForWifiControl` | `wifictl` | control Wi-Fi (no tocar) |
+| `kMessageTopicForWifiLoggingConfiguration` | `wifilog` | registro Wi-Fi |
+| `kMessageTopicForRobotLoggingConfiguration` | `logUpload` | subida de logs |
+| `kMessageTopicForPackageUpdate` | `deployment` | OTA/paquetes (no tocar) |
+| `kMessageTopicForUmiCommands` | `umi/req` | comandos UMI estilo `{"do": ...}` |
+| `kMessageTopicForLocalRrtpRequest` | `req` | petición de posición en tiempo real (RRTP) |
+| `kMessagePayloadTemplate` | — | `{"state": %s}` |
+
+- **Posición del robot** (`GetRobotPositionLocalSecureSocketSerializer`, comando `GetRobotPositionCommand`): publica en `req` la plantilla `{ "reqId" : "%s" , "reqType" : "%s" , "conType" : "%s"}`. La respuesta es un `RobotPositionEvent` (`reqId`, `reportType`, `ver`, `coordinatesType`, lista de `PositionData`). Hay casos de uso `RobotPositionUseCase` y `OmapRobotPositionUseCase` (mapa en vivo en la app). Valores válidos de `reqType`/`conType` y topic de respuesta: sin determinar (hay que leer el `RobotPositionCommand` o observar una respuesta).
+- **Pose UMI** (`LegacyGetPoseLocalSecureSocketSerializer`): publica en `umi/req` `{"do": "get", "args": ["pose"], "id": N}`; la respuesta se procesa en un parser que registra "Could not parse mqtt umi pose response". También existe `{"do": "set", "args": [%s]}`.
+- **Conducción manual** (`DriveCommandLocalSecureSocketSerializer`): `"drive", {"mode":3, "l":<velocidad>, "r":<velocidad angular>, "flags":...}` por `umi/req`. MUEVE el robot: nunca probar sin que el usuario lo pida expresamente.
+- Herramienta nueva: `research/tools/ghidra/run.sh refs <proyecto> <nombre> <programa> <símbolo+...> <salida.c> [max]` (script `DumpSymbolRefs.java`) decompila las funciones que referencian un símbolo; así se leen constantes estáticas que `strings` no ve.

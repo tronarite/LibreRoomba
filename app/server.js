@@ -9,6 +9,7 @@ const { discover } = require('./core/discovery');
 const { createHistory } = require('./history');
 const { summarize } = require('./maintenance');
 const { createRooms, measure } = require('./rooms');
+const { createGuard } = require('./core/localguard');
 const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
 const { createFakeCloud } = require('./core/fake-cloud');
 const { normalizeParts } = require('./core/parts');
@@ -146,6 +147,8 @@ function handle(res, action) {
 }
 
 const app = express();
+const guard = createGuard({ host: HOST, extraHosts: (process.env.LIBREROOMBA_ALLOWED_HOSTS || '').split(',') });   // LIBREROOMBA_ALLOWED_HOSTS: nombres extra (p. ej. el de la LAN)
+app.use(guard.middleware);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/api/state', (_req, res) => res.json(summary()));
@@ -239,7 +242,7 @@ app.post('/api/experimental/cmd', (req, res) => handle(res, () => core.experimen
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 server.on('upgrade', (request, socket, head) => {
-  if (new URL(request.url, `http://${request.headers.host}`).pathname !== '/ws') return socket.destroy();
+  if (guard.check(request.headers) || new URL(request.url, `http://${request.headers.host}`).pathname !== '/ws') return socket.destroy();
   wss.handleUpgrade(request, socket, head, (ws) => wss.emit('connection', ws, request));
 });
 wss.on('connection', (ws) => ws.send(JSON.stringify(summary())));

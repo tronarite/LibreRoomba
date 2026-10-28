@@ -38,10 +38,10 @@ test('measure: área del rectángulo y porcentaje cubierto del mapa fusionado', 
 
 test('API /api/rooms en modo mock', async (t) => {
   const f = tmp();
-  const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), '--mock'], { env: { ...process.env, PORT: '3197', LIBREROOMBA_ROOMS_FILE: f }, stdio: ['ignore', 'pipe', 'inherit'] });
+  const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), '--mock'], { env: { ...process.env, PORT: '3232', LIBREROOMBA_ROOMS_FILE: f }, stdio: ['ignore', 'pipe', 'inherit'] });
   t.after(() => child.kill());
   await new Promise((resolve, reject) => { child.once('error', reject); child.stdout.on('data', (c) => { if (String(c).includes('disponible')) resolve(); }); });
-  const url = 'http://127.0.0.1:3197/api/rooms';
+  const url = 'http://127.0.0.1:3232/api/rooms';
   const put = (rooms) => fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rooms }) });
   assert.deepEqual((await (await fetch(url)).json()).rooms, []);
   const res = await put([{ name: 'Cocina', x0: -1, y0: -1, x1: 2, y1: 2 }]);
