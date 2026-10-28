@@ -199,14 +199,16 @@ async function buildCloudMap(limit) {
 }
 async function downloadAndMerge(refs, key) {
   const maps = [];
+  let authError = null;
   let next = 0;
   async function worker() {                                  // 3 descargas a la vez como máximo; los mapas ya vistos salen de la caché en disco
     while (next < refs.length) {
       const ref = refs[next++];
-      try { maps.push(await cloud.umf(ref.pmapId, ref.version)); } catch (error) { if (error.code === 'expired' || error.code === 'no-session') throw error; }
+      try { maps.push(await cloud.umf(ref.pmapId, ref.version)); } catch (error) { if (error.code === 'expired' || error.code === 'no-session') authError = error; }   // los que ya están en caché siguen valiendo sin sesión
     }
   }
   await Promise.all([worker(), worker(), worker()]);
+  if (authError && !maps.length) throw authError;
   const value = mergeMissions(maps);
   mapCache = { key, value };
   return value;

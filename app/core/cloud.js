@@ -102,7 +102,13 @@ function createCloud({ sessionPath = DEFAULT_SESSION, fetchFn = globalThis.fetch
       const cached = readCache(file, HISTORY_TTL_MS);
       if (cached) { memory.history = { at: now(), data: cached }; return cached; }
     }
-    const data = await get('history');
+    let data;
+    try { data = await get('history'); } catch (error) {
+      // Sin sesión válida o sin red: se sirve el último historial guardado en disco (aunque esté caducado)
+      const stale = ['expired', 'no-session', 'network'].includes(error.code) ? readCache(file, 0) : null;
+      if (stale) return stale;
+      throw error;
+    }
     if (!Array.isArray(data)) throw new CloudError('Formato inesperado en el historial de la nube.', 'http');
     memory.history = { at: now(), data };
     writeCache(file, data);
