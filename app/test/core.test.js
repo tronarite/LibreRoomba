@@ -197,7 +197,7 @@ test('descubrimiento: no se usa si el fallo es de contraseña (el robot está ah
 });
 
 test('base mientras limpia: la i1+ ignora dock en run, así que se envía stop y después dock', async () => {
-  const { robot, c } = await setup({ fake: { dockDelayMs: 20 } });
+  const { robot, c } = await setup({ fake: { dockDelayMs: 20, savingMapMs: 30 }, core: { dockSettleMs: 20 } });
   await until(() => c.connected && c.state.batPct);
   c.command('start');
   await until(() => c.state.cleanMissionStatus.phase === 'run');

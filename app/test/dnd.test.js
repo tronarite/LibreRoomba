@@ -81,8 +81,8 @@ test('createDndStore: guarda, relee y no acepta datos no válidos', () => {
 
 // Vigilante: reloj controlado y tick() manual (el intervalo real es de una hora para que no interfiera)
 async function setup({ items = [win()], start = at(1, 21, 0), fake = {} } = {}) {
-  const robot = createFakeRobot({ password: 'ok', dockDelayMs: 15, ...fake });
-  const core = new RobotCore({ ip: 'x', blid: 'b', password: 'ok', connect: robot.connect, reconnect: { min: 10, max: 40 } });
+  const robot = createFakeRobot({ password: 'ok', dockDelayMs: 15, savingMapMs: 20, ...fake });
+  const core = new RobotCore({ ip: 'x', blid: 'b', password: 'ok', connect: robot.connect, dockSettleMs: 20, reconnect: { min: 10, max: 40 } });
   core.on('error', () => {});
   let t = start.getTime();
   const now = () => t;

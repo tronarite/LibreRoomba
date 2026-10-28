@@ -9,9 +9,13 @@ const ACTIVE = new Set(['run', 'hmMidMsn', 'hmPostMsn', 'hmUsrDock']);   // fase
 const COOLDOWNS = { 'mission-finished': 0, 'mission-stopped': 0, 'robot-reconnected': 0, 'auth-recovered': 0, 'dnd-started': 0, 'dnd-ended': 0 };
 
 class Notifier extends EventEmitter {
-  constructor(core, { lowBattery = 15, rearmBattery = 20, cooldownMs = 60000, disconnectGraceMs = 5000, max = 50, now = Date.now, lang = 'es', authHelp = '' } = {}) {
+  // notReadyGraceMs: el motivo de «no puede empezar» debe durar esto para avisar (al parar, el robot pasa ~2 s en 39 «guardando el mapa»,
+  // y al levantarlo para limpiarlo cambia varias veces seguidas: probado con el robot real el 2026-10-28)
+  constructor(core, { lowBattery = 15, rearmBattery = 20, cooldownMs = 60000, disconnectGraceMs = 5000, notReadyGraceMs = 5000, missionStopGraceMs = 15000, max = 50, now = Date.now, lang = 'es', authHelp = '' } = {}) {
     super();
-    Object.assign(this, { core, lowBattery, rearmBattery, cooldownMs, disconnectGraceMs, max, now, lang, authHelp });
+    Object.assign(this, { core, lowBattery, rearmBattery, cooldownMs, disconnectGraceMs, notReadyGraceMs, missionStopGraceMs, max, now, lang, authHelp });
+    this._notReadyTimer = null;
+    this._stopTimer = null;
     this._events = [];
     this._seq = 0;
     this._last = new Map();          // tipo[:clave] -> instante del último aviso
@@ -33,7 +37,7 @@ class Notifier extends EventEmitter {
   // Avisos de otros módulos (p. ej. No molestar), con el mismo antirrebote por tipo
   notify(type, severity, title, message, data = {}) { return this._emit(type, severity, title, message, data); }
 
-  stop() { clearTimeout(this._disconnectTimer); this._disconnectTimer = null; }
+  stop() { clearTimeout(this._disconnectTimer); this._disconnectTimer = null; clearTimeout(this._notReadyTimer); this._notReadyTimer = null; clearTimeout(this._stopTimer); this._stopTimer = null; }
 
   _robotName() { return (this.core.state && this.core.state.name) || (this.lang === 'en' ? 'The robot' : 'El robot'); }
 
@@ -65,8 +69,16 @@ class Notifier extends EventEmitter {
         this._emit('mission-finished', 'info', 'Misión terminada', `${name} ha terminado de limpiar y está en la base.` + (minutes === null ? '' : ` Duración aproximada: ${minutes} min.`), { minutes });
         this._missionSeen = false; this._missionStart = null;
       } else if (cur.phase === 'stop' && cur.cycle === 'none' && ACTIVE.has(prev.phase)) {
-        this._emit('mission-stopped', 'info', 'Misión detenida', `${name} se ha detenido y no está en la base.`, {});
-        this._missionSeen = false; this._missionStart = null;
+        // «Base» durante una limpieza pasa por stop (la i1+ ignora dock en run): solo es «detenida» si sigue parado pasado el margen
+        clearTimeout(this._stopTimer);
+        this._stopTimer = setTimeout(() => {
+          this._stopTimer = null;
+          const m = (this.core.state || {}).cleanMissionStatus || {};
+          if (!this._missionSeen || m.phase !== 'stop') return;
+          this._emit('mission-stopped', 'info', 'Misión detenida', `${this._robotName()} se ha detenido y no está en la base.`, {});
+          this._missionSeen = false; this._missionStart = null;
+        }, this.missionStopGraceMs);
+        if (this._stopTimer.unref) this._stopTimer.unref();
       }
     }
 
@@ -83,9 +95,21 @@ class Notifier extends EventEmitter {
     }
 
     // El robot no puede empezar (notReady pasa a un código distinto de 0): texto del rechazo de la app ("Start-Refuse N")
-    if (Number.isInteger(cur.notReady) && cur.notReady !== 0 && prev.notReady !== undefined && cur.notReady !== prev.notReady) {
-      const d = describeNotReady(cur.notReady, this.lang, { robot: name });
-      this._emit('not-ready', 'warning', d.title, d.message || d.title, { notReady: cur.notReady, code: d.code, name: d.name, known: d.known }, String(cur.notReady));
+    // Solo si el motivo sigue igual pasados notReadyGraceMs
+    if (prev.notReady !== undefined && cur.notReady !== prev.notReady) {
+      clearTimeout(this._notReadyTimer);
+      this._notReadyTimer = null;
+      if (Number.isInteger(cur.notReady) && cur.notReady !== 0) {
+        const code = cur.notReady;
+        this._notReadyTimer = setTimeout(() => {
+          this._notReadyTimer = null;
+          const now = ((this.core.state || {}).cleanMissionStatus || {}).notReady;
+          if (now !== code) return;
+          const d = describeNotReady(code, this.lang, { robot: this._robotName() });
+          this._emit('not-ready', 'warning', d.title, d.message || d.title, { notReady: code, code: d.code, name: d.name, known: d.known }, String(code));
+        }, this.notReadyGraceMs);
+        if (this._notReadyTimer.unref) this._notReadyTimer.unref();
+      }
     }
     // Error de la base (dock.state 350-365, p. ej. bolsa llena u obstrucción)
     if (Number.isInteger(cur.dock) && cur.dock >= 350 && prev.dock !== undefined && cur.dock !== prev.dock) {

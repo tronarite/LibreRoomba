@@ -12,8 +12,9 @@ const INITIAL = {
 };
 const PHASE = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 'hmUsrDock', evac: 'evac' };
 
-// opciones: password (si se da, rechaza otras), state (parte del estado inicial), dockDelayMs (tiempo hasta volver a cargar)
-function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
+// opciones: password (si se da, rechaza otras), state (parte del estado inicial), dockDelayMs (tiempo hasta volver a cargar),
+// savingMapMs (tras parar una misión, tiempo en notReady 39 «guardando el mapa», como la i1+ real; 0 = sin ese paso)
+function createFakeRobot({ password, state = {}, dockDelayMs = 4000, savingMapMs = 2000 } = {}) {
   const robot = { password, clients: [], published: [], ignore: new Set(), state: deepMerge(JSON.parse(JSON.stringify(INITIAL)), state) };
 
   robot.report = (delta) => {
@@ -57,7 +58,15 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
     if (robot.ignore.has(body.command)) return;   // pruebas: orden que el robot no atiende
     const phase = PHASE[body.command];
     if (!phase) return;   // find y desconocidos: sin cambio de fase
-    if (body.command === 'dock' && robot.state.cleanMissionStatus.phase === 'run') return;   // como la i1+ real: ignora dock mientras limpia
+    const current = robot.state.cleanMissionStatus;
+    // Como la i1+ real: ignora dock mientras limpia y durante el notReady 39 que sigue a un stop
+    if (body.command === 'dock' && (current.phase === 'run' || current.notReady === 39)) return;
+    if (body.command === 'stop' && current.phase === 'run' && savingMapMs > 0) {
+      robot.report({ cleanMissionStatus: { phase: 'stop', cycle: 'none', notReady: 39 } });
+      const timer = setTimeout(() => robot.report({ cleanMissionStatus: { notReady: 0 } }), savingMapMs);
+      if (timer.unref) timer.unref();
+      return;
+    }
     const returns = body.command === 'dock' || body.command === 'evac';
     const started = body.command === 'start' ? { initiator: body.initiator || 'localApp' } : {};   // el robot real reporta quién inició la misión
     robot.report({ cleanMissionStatus: { phase, cycle: returns ? 'none' : 'clean', ...started } });

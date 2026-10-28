@@ -31,7 +31,7 @@ test('/api/events: vacío al arrancar y, tras una misión simulada, un único av
   assert.equal((await post(`${s.url}/api/cmd`, { command: 'start' })).status, 200);
   await wait(200);
   assert.equal((await post(`${s.url}/api/cmd`, { command: 'dock' })).status, 200);
-  const deadline = Date.now() + 8000;
+  const deadline = Date.now() + 20000;   // stop, 2 s «guardando el mapa», 3 s de margen, dock y 4 s hasta la base
   let events = [];
   while (Date.now() < deadline) { events = await (await fetch(`${s.url}/api/events`)).json(); if (events.length) break; await wait(200); }
 

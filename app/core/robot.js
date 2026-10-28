@@ -31,11 +31,13 @@ class RobotCore extends EventEmitter {
   // connect(url, options) => cliente tipo mqtt.js; se inyecta en pruebas y en el modo simulado.
   // discover(): opcional, async () => ({ ip }) | null. Se usa tras `discoverAfter` conexiones fallidas seguidas para buscar la IP nueva.
   // reconnect.authMin/authMax: espera (ms) entre reintentos cuando el robot rechaza la contraseña (no tiene sentido insistir cada segundo).
-  // dockWaitMs: tope de espera entre `stop` y `dock` cuando se manda a la base un robot que está limpiando.
-  constructor({ ip, blid, password, connect = defaultConnect, experimental = false, reconnect = {}, discover = null, discoverAfter = 3, dockWaitMs = 15000 } = {}) {
+  // dockWaitMs: tope de espera entre `stop` y `dock` cuando se manda a la base un robot que está limpiando;
+  // dockSettleMs: tiempo que debe seguir parado y con notReady 0 antes del `dock`.
+  constructor({ ip, blid, password, connect = defaultConnect, experimental = false, reconnect = {}, discover = null, discoverAfter = 3, dockWaitMs = 30000, dockSettleMs = 3000 } = {}) {
     super();
     Object.assign(this, { ip, blid, password, experimental });
     this._dockWaitMs = dockWaitMs;
+    this._dockSettleMs = dockSettleMs;
     this._dockAfterStop = null;
     this._connectFn = connect;
     this._backoff = { min: 1000, max: 30000, authMin: 30000, authMax: 300000, ...reconnect };
@@ -170,17 +172,27 @@ class RobotCore extends EventEmitter {
   }
 
   // La i1+ ignora `dock` mientras limpia (probado 2026-10-28; dorita980: "before dock you need to pause() or stop()"):
-  // se envía `stop` y, cuando el robot sale de `run` (o a los dockWaitMs), `dock`. stop + dock ya funcionó en el robot el 2026-10-24.
+  // se envía `stop` y, cuando el robot sale de `run` y lleva dockSettleMs con notReady 0, `dock` (como mucho a los dockWaitMs).
+  // La espera hace falta: justo tras el stop el robot pasa ~2 s en notReady 39 (guardando el mapa) e ignora el dock (probado 2026-10-28).
   _stopThenDock() {
     this._publish('cmd', { command: 'stop', time: Math.floor(Date.now() / 1000), initiator: 'localApp' });
     if (this._dockAfterStop) return;   // ya hay un dock pendiente
+    let settle = null;
     const finish = () => {
       clearTimeout(timer);
+      clearTimeout(settle);
       this.removeListener('state', onState);
       this._dockAfterStop = null;
       try { this._publish('cmd', { command: 'dock', time: Math.floor(Date.now() / 1000), initiator: 'localApp' }); } catch (error) { this.emit('error', error); }
     };
-    const onState = () => { const m = this.state.cleanMissionStatus || {}; if (m.phase && m.phase !== 'run') finish(); };
+    const onState = () => {
+      const m = this.state.cleanMissionStatus || {};
+      clearTimeout(settle);
+      settle = null;
+      if (!m.phase || m.phase === 'run' || (m.notReady !== undefined && m.notReady !== 0)) return;
+      settle = setTimeout(finish, this._dockSettleMs);
+      if (settle.unref) settle.unref();
+    };
     const timer = setTimeout(finish, this._dockWaitMs);
     if (timer.unref) timer.unref();
     this.on('state', onState);

@@ -11,11 +11,11 @@ const until = async (check, ms = 1500) => { const end = Date.now() + ms; while (
 function clock(start = Date.parse('2026-10-24T12:00:00Z')) { let t = start; const fn = () => t; fn.advance = (ms) => { t += ms; }; return fn; }
 
 async function setup({ fake = {}, notifier = {}, core = {} } = {}) {
-  const robot = createFakeRobot({ password: 'ok', dockDelayMs: 15, ...fake });
-  const c = new RobotCore({ ip: 'x', blid: 'b', password: 'ok', connect: robot.connect, ...core, reconnect: { min: 10, max: 40, authMin: 40, authMax: 80, ...core.reconnect } });
+  const robot = createFakeRobot({ password: 'ok', dockDelayMs: 15, savingMapMs: 20, ...fake });
+  const c = new RobotCore({ ip: 'x', blid: 'b', password: 'ok', connect: robot.connect, dockSettleMs: 20, ...core, reconnect: { min: 10, max: 40, authMin: 40, authMax: 80, ...core.reconnect } });
   c.on('error', () => {});
   const now = clock();
-  const n = new Notifier(c, { now, disconnectGraceMs: 30, ...notifier });
+  const n = new Notifier(c, { now, disconnectGraceMs: 30, notReadyGraceMs: 30, missionStopGraceMs: 80, ...notifier });
   const seen = [];
   n.on('event', (e) => seen.push(e));
   c.start();
@@ -59,6 +59,9 @@ test('misión: run -> dock -> charge avisa una sola vez de misión terminada, co
   assert.equal(finished.length, 1);
   assert.equal(finished[0].data.minutes, 25);
   assert.match(finished[0].message, /25 min/);
+  await tick(100);
+  assert.ok(!types(seen).includes('mission-stopped'), 'el stop previo al dock (la i1+ ignora dock en run) no es «detenida»');
+  assert.ok(!types(seen).includes('not-ready'), 'el notReady 39 pasajero tras el stop no avisa');
   robot.report({ cleanMissionStatus: { phase: 'charge' } }); await tick(10);
   assert.equal(seen.filter((e) => e.type === 'mission-finished').length, 1, 'no se repite');
   c.stop(); n.stop();
