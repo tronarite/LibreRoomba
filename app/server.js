@@ -10,6 +10,7 @@ const { createHistory } = require('./history');
 const { summarize } = require('./maintenance');
 const { createRooms, measure } = require('./rooms');
 const { createGuard } = require('./core/localguard');
+const { createLocalParts } = require('./core/localparts');
 const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
 const { createFakeCloud } = require('./core/fake-cloud');
 const { normalizeParts } = require('./core/parts');
@@ -35,6 +36,7 @@ function robotPassword() {
 }
 
 const history = createHistory(path.join(__dirname, 'data', 'history.json'));
+const localParts = createLocalParts(process.env.LIBREROOMBA_PARTS_FILE || path.join(__dirname, 'data', 'parts.json'));
 const rooms = createRooms(process.env.LIBREROOMBA_ROOMS_FILE || path.join(__dirname, 'data', 'rooms.json'));
 let core;
 if (mockMode) {
@@ -224,6 +226,13 @@ app.put('/api/rooms', async (req, res) => {
   let map = null;
   try { map = await buildCloudMap(60); } catch (_) { /* igual */ }
   res.json({ rooms: measure(rooms.list(), map) });
+});
+// Piezas sin nube: horas del robot (bbrun.hr) menos las de su instalación
+const runHours = () => { const h = (core.state.bbrun || {}).hr; return Number.isFinite(h) ? h : null; };
+app.get('/api/parts', (_req, res) => res.json({ parts: localParts.list(runHours()), runHours: runHours() }));
+app.post('/api/parts/:id', (req, res) => {
+  try { res.json({ parts: localParts.update(req.params.id, req.body, runHours()), runHours: runHours() }); }
+  catch (error) { res.status(400).json({ error: error.message }); }
 });
 app.get('/api/maintenance', (_req, res) => res.json(summarize(core.state)));
 app.get('/api/raw', (_req, res) => res.json(core.state));
