@@ -92,10 +92,10 @@
       document.querySelector('#cloud-map-summary').textContent = summary;
       const totals = Object.entries(map.stallTotals || {}).sort((a, b) => b[1] - a[1]).map(([event, n]) => `${n.toLocaleString('es-ES')} × ${STALL_LABELS[event] || event}`);
       document.querySelector('#cloud-map-stalls').textContent = totals.length ? `Eventos registrados en esas misiones: ${totals.join('; ')}. En el mapa solo se marcan las zonas con atascos repetidos.` : '';
-      canvas.setAttribute('aria-label', `Mapa de cobertura. ${summary} ${map.stalls.length} zonas con atascos repetidos.`);
+      canvas.dataset.label = `Mapa de cobertura. ${summary} ${map.stalls.length} zonas con atascos repetidos.`;
       mapMsg.textContent = '';
       mapBox.classList.remove('hidden');
-      draw();
+      renderRooms();
     } catch (error) {
       mapMsg.textContent = explain(error);
     }
@@ -114,6 +114,7 @@
       del.addEventListener('click', () => saveRooms(state.rooms.filter((_, k) => k !== i)));
       li.append(text, del); roomsList.append(li);
     }
+    canvas.setAttribute('aria-label', `${canvas.dataset.label || 'Mapa de cobertura.'}${state.rooms.length ? ` Habitaciones: ${state.rooms.map((r) => r.name).join(', ')}.` : ''}`);
     draw();
   }
   async function saveRooms(list) {
@@ -127,6 +128,13 @@
   async function loadRooms() {
     try { const response = await fetch('/api/rooms'); state.rooms = (await response.json()).rooms || []; renderRooms(); } catch (_) { /* sin habitaciones */ }
   }
+  document.querySelector('#room-add').addEventListener('click', () => {
+    const v = ['x0', 'y0', 'x1', 'y1'].map((k) => document.querySelector(`#room-${k}`).value);
+    if (!nameInput.value.trim()) { roomsMsg.textContent = 'Escribe primero el nombre de la habitación.'; nameInput.focus(); return; }
+    if (v.some((x) => x === '' || !Number.isFinite(Number(x)))) { roomsMsg.textContent = 'Rellena las cuatro coordenadas con números.'; return; }
+    const [x0, y0, x1, y1] = v.map(Number);
+    saveRooms([...state.rooms, { name: nameInput.value.trim(), x0, y0, x1, y1 }]); nameInput.value = '';
+  });
   const toMeters = (event) => {
     const box = canvas.getBoundingClientRect(), map = state.map;
     const fx = (event.clientX - box.left) / box.width, fy = (event.clientY - box.top) / box.height;

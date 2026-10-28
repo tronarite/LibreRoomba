@@ -172,10 +172,17 @@ function cloudFail(res, error) {
   res.status(CLOUD_STATUS[error.code] || 500).json({ error: error.message, code: error.code || 'internal' });
 }
 let mapCache = { key: null, value: null };
+let mapInflight = { key: null, promise: null };   // el mapa y las habitaciones lo piden a la vez al cargar la página: una sola descarga
 async function buildCloudMap(limit) {
   const refs = (await cloud.missionHistory()).map(mapRef).filter(Boolean).slice(0, limit);
   const key = refs.map((r) => `${r.pmapId}:${r.version}`).join(',');
   if (mapCache.key === key) return mapCache.value;
+  if (mapInflight.key === key) return mapInflight.promise;
+  const promise = downloadAndMerge(refs, key);
+  mapInflight = { key, promise };
+  try { return await promise; } finally { if (mapInflight.promise === promise) mapInflight = { key: null, promise: null }; }
+}
+async function downloadAndMerge(refs, key) {
   const maps = [];
   let next = 0;
   async function worker() {                                  // 3 descargas a la vez como máximo; los mapas ya vistos salen de la caché en disco

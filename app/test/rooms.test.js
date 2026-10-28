@@ -51,3 +51,13 @@ test('API /api/rooms en modo mock', async (t) => {
   assert.equal(typeof room.coveragePct, 'number', 'con el mapa mock hay cobertura');
   assert.equal((await put([{ name: '', x0: 0, y0: 0, x1: 1, y1: 1 }])).status, 400);
 });
+
+test('mapa y habitaciones pedidos a la vez responden bien (comparten la descarga en curso)', async (t) => {
+  const f = tmp();
+  const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), '--mock'], { env: { ...process.env, PORT: '3233', LIBREROOMBA_ROOMS_FILE: f }, stdio: ['ignore', 'pipe', 'inherit'] });
+  t.after(() => child.kill());
+  await new Promise((resolve, reject) => { child.once('error', reject); child.stdout.on('data', (c) => { if (String(c).includes('disponible')) resolve(); }); });
+  const [map, rooms] = await Promise.all([fetch('http://127.0.0.1:3233/api/cloud/map'), fetch('http://127.0.0.1:3233/api/rooms')]);
+  assert.equal(map.status, 200);
+  assert.equal(rooms.status, 200);
+});
