@@ -201,7 +201,7 @@ app.post('/api/schedule', (req, res) => {
 app.get('/api/dnd', (_req, res) => res.json(dndState()));
 app.post('/api/dnd', (req, res) => {
   try { dndStore.set((req.body || {}).items); } catch (error) { return res.status(400).json({ error: error.message }); }
-  dndGuard.tick();
+  dndGuard.reset();   // guardar no manda el robot a la base: solo el comienzo de una franja por la hora termina misiones
   broadcast();
   res.json(dndState());
 });

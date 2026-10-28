@@ -10,6 +10,7 @@ Siempre: guardar valor previo, restaurar, parar la web app antes de scripts de r
 - [ ] Orden `clean` por regiones (requiere pmap; solo observar rechazo).
 
 - [ ] No molestar (`app/core/dnd-guard.js`): confirmar que una misión de la programación reporta `cleanMissionStatus.initiator: "schedule"` (solo visto `manual` en el robot; `schedule` es lo que lleva `cleanSchedule2.cmd`) y que `dock` la termina limpia (sin error ni misión "detenida" en el historial). Prueba sin cambiar la programación: crear una franja que empiece en 1-2 min durante una limpieza manual y observar.
+- [ ] No molestar: comprobar que el robot envía `cleanMissionStatus` entero (con `phase` e `initiator` en el mismo delta). Si `initiator` llegara después, un arranque programado se escaparía y un `initiator: "schedule"` viejo podría mandar a la base un arranque con el botón; en ese caso, detectar la misión nueva por `missionId`/`mssnStrtTm`.
 
 ## Añadidas desde la sección "Experimental" del panel (app/, `LIBREROOMBA_EXPERIMENTAL=1`)
 - [x] `evac`: probado 2026-10-24, funciona (ver protocol-notes.md). Promovido a botón normal con confirmación.

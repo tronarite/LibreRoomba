@@ -160,13 +160,56 @@ test('fuera de la franja la programación limpia con normalidad, y el antirrebot
   s.stop();
 });
 
-test('robot desconectado: avisa de que no pudo mandarlo a la base', async () => {
+test('robot desconectado al empezar la franja: termina la misión al reconectar', async () => {
   const s = await setup();
   s.core.command('start');
   await until(() => s.core.state.cleanMissionStatus.phase === 'run');
   s.core.stop();                                         // conserva el estado pero sin conexión
   s.now.set(at(1, 22, 0)); s.guard.tick();
+  assert.equal(s.docks(), 0);
+  s.core.start();
+  await until(() => s.docks() === 1);
+  assert.equal(s.notes.at(-1).type, 'dnd-ended-mission');
+  s.stop();
+});
+
+test('si la orden falla se avisa y se reintenta sin esperar al antirrebote; al acabar la franja se olvida', async () => {
+  const s = await setup();
+  s.core.command('start');
+  await until(() => s.core.state.cleanMissionStatus.phase === 'run');
+  const real = s.core.command.bind(s.core);
+  let fail = true;
+  s.core.command = (name) => { if (fail) throw new Error('fallo simulado'); return real(name); };
+  s.now.set(at(1, 22, 0)); s.guard.tick();
   assert.equal(s.notes.at(-1).type, 'dnd-dock-failed');
   assert.equal(s.notes.at(-1).severity, 'error');
-  s.guard.stop();
+  fail = false;
+  s.robot.report({ batPct: 80 });                        // cualquier estado nuevo reintenta
+  await until(() => s.docks() === 1);
+  s.stop();
+
+  const t = await setup();
+  t.core.command('start');
+  await until(() => t.core.state.cleanMissionStatus.phase === 'run');
+  t.core.stop();
+  t.now.set(at(1, 22, 0)); t.guard.tick();
+  t.now.set(at(2, 7, 30)); t.guard.tick();               // la franja acaba antes de reconectar
+  t.core.start();
+  await until(() => t.core.connected); await tick(40);
+  assert.equal(t.docks(), 0);
+  t.stop();
+});
+
+test('guardar una franja que cubre la hora actual (reset) no termina la misión en curso', async () => {
+  const items = [];
+  const s = await setup({ items, start: at(1, 23, 0) });
+  s.core.command('start');
+  await until(() => s.core.state.cleanMissionStatus.phase === 'run');
+  items.push(win());
+  s.guard.items = () => dnd.validate(items);
+  s.guard.reset();
+  assert.equal(s.changes.at(-1).label, 'Momento de tranquilidad');
+  s.guard.tick(); await tick(30);
+  assert.equal(s.docks(), 0);
+  s.stop();
 });

@@ -215,8 +215,14 @@
             return json;
           });
         })
-        .then(function () {
-          setMessage('Guardado', false);
+        .then(function (json) {
+          // Programaciones que empiezan dentro de una franja de No molestar: no se desactivan, solo se avisa
+          const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          const warnings = (json && json.warnings) || [];
+          if (!warnings.length) return setMessage('Guardado', false);
+          setMessage('Guardado. ' + warnings.map(function (w) {
+            return 'La programación ' + (w.schedule + 1) + ' empieza durante la franja ' + (w.dnd + 1) + ' de No molestar (' + days[w.day] + '): el robot empezará y LibreRoomba lo mandará a la base.';
+          }).join(' '), true);
         })
         .catch(function (err) {
           setMessage(err.message || 'Error al guardar la programación', true);
