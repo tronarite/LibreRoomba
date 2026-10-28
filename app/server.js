@@ -181,7 +181,7 @@ app.get('/api/history', (_req, res) => res.json(history.list()));
 app.get('/api/events', (_req, res) => res.json(notifier.list()));   // últimos 50 avisos, el más reciente primero
 
 // Nube de iRobot (solo lectura, con la sesión de research/cloud/login.js). En --mock se usa una nube simulada.
-const cloud = mockMode ? createFakeCloud() : createCloud({ cacheDir: path.join(__dirname, 'data') });
+const cloud = mockMode ? createFakeCloud() : createCloud({ cacheDir: path.join(__dirname, 'data'), autoRenew: true });
 const CLOUD_STATUS = { 'no-session': 401, expired: 401, invalid: 400, network: 502, http: 502 };
 function cloudFail(res, error) {
   res.status(CLOUD_STATUS[error.code] || 500).json({ error: error.message, code: error.code || 'internal' });

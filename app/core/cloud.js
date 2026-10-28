@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { sign } = require('./sigv4');
+const { refreshSession } = require('./session-refresh');
 
 const REGION = 'us-east-1';
 const SERVICE = 'execute-api';
@@ -45,7 +46,7 @@ function mapRef(m) {
   return entry && SAFE.test(entry[0]) && SAFE.test(entry[1]) ? { pmapId: entry[0], version: entry[1] } : null;
 }
 
-function createCloud({ sessionPath = DEFAULT_SESSION, fetchFn = globalThis.fetch, cacheDir = null, now = () => Date.now() } = {}) {
+function createCloud({ sessionPath = DEFAULT_SESSION, fetchFn = globalThis.fetch, cacheDir = null, now = () => Date.now(), autoRenew = false } = {}) {
   const memory = { history: null, parts: null };
 
   function session() {
@@ -81,7 +82,12 @@ function createCloud({ sessionPath = DEFAULT_SESSION, fetchFn = globalThis.fetch
   async function get(routeKey, params = {}) {
     if (!Object.hasOwn(ROUTES, routeKey)) throw new CloudError('Ruta no permitida', 'invalid');
     for (const value of Object.values(params)) if (!SAFE.test(String(value))) throw new CloudError('Parámetro no válido', 'invalid');
-    const s = session();
+    let s;
+    try { s = session(); } catch (error) {
+      if (!autoRenew || error.code !== 'expired') throw error;
+      try { await refreshSession({ sessionPath, fetchFn, now }); } catch (_) { throw error; }   // si no se puede renovar, se avisa de que caducó
+      s = session();
+    }
     const blid = Object.keys(s.robots)[0];
     const route = ROUTES[routeKey].replace('%s', blid).replace('%p', params.pmapId || '').replace('%v', params.version || '');
     const url = s.deployment.httpBaseAuth + route;

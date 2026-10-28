@@ -4,6 +4,7 @@
 //      LIBREROOMBA_CONFIRM_OTA=yes node research/cloud/request-ota.js --version <v> --send [--download]
 // Una sola petición, sin reintentos, una única ruta permitida. Si la nube ordena una actualización, el robot la instalará y no se deshace.
 const fs = require('fs');
+const { refreshSession } = require('../../app/core/session-refresh');
 const path = require('path');
 const crypto = require('crypto');
 const { sign } = require('../../app/core/sigv4');
@@ -101,6 +102,11 @@ async function download(url, outDir, fetchFn) {
 // Punto de entrada testeable: todo (argumentos, entorno, red, rutas, log) se inyecta
 async function run({ argv = [], env = {}, fetchFn = globalThis.fetch, sessionPath = SESSION, outDir = OUT_DIR, log = console.log, now = () => new Date() } = {}) {
   const args = parseArgs(argv);
+  try { loadSession(sessionPath); } catch (error) {
+    // Credenciales caducadas (duran ~1 h): se renuevan con la sesión de Gigya, sin pedir la contraseña
+    if (!/caduc/.test(error.message)) throw error;
+    try { await refreshSession({ sessionPath, fetchFn }); log('Sesión de la nube renovada automáticamente.'); } catch (_) { throw error; }
+  }
   const session = loadSession(sessionPath);
   const req = buildRequest(session, args.version, now());
   log('Petición (sin secretos):');
