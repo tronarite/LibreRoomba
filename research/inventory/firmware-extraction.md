@@ -18,3 +18,9 @@
 - La nube puede exigir que `app_id` coincida con el del login.
 - Respuesta de `request-ota` desconocida; secureBoot PRODUCTION: un paquete propio no se instalaría.
 - Si el robot se actualiza no hay vuelta atrás y puede cambiar la contraseña local (recuperar con `get-password.js`).
+
+## Resultado de las pruebas (2026-10-28) y estado: PENDIENTE
+- `request-ota` con la versión real (`daredevil+2.6.0+daredevil-release+163`) y con una falsa más antigua (`daredevil+2.5.0+daredevil-release+150`): ambas HTTP 200 `{"result":"success"}`, sin URL ni paquete; el robot no cambió (versión, `deploymentState` 0, en la base). La nube no devuelve el paquete por esta ruta; es solo un aviso al robot.
+- La app no tiene ninguna ruta de consulta de actualización (solo `missionhistory`, `pmaps`, `maintenance`, `reset`, `request-ota`).
+- Vías que quedan: (1) esperar a una versión nueva y registrar a qué servidor baja el robot (DNS por DHCP: el router Movistar Wi-Fi 7 puede no dejar; no se hace ARP spoofing) o capturar tráfico; (2) volcar la flash abriendo el robot (pinza SPI/serie, ~10 €). Decisión del usuario: se deja como tarea pendiente.
+- La sesión de la nube ahora se renueva sola (`app/core/session-refresh.js`, `research/cloud/refresh.js`).
