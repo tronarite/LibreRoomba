@@ -54,6 +54,8 @@ td[data-result="ok"]{color:#86efac} td[data-result="cancelada"]{color:#cbd5e1} t
 .event-error{border-left-color:#f87171}.event-warning{border-left-color:#fbbf24}.event-info{border-left-color:#60a5fa}
 button.secondary{background:#334155;color:#f4f7fb}
 button.secondary[aria-pressed="true"]{background:#14532d}
+.dnd-day[aria-pressed="false"]{background:#334155;color:#f4f7fb}
+.dnd-banner{border-left:4px solid #a78bfa}
 
 .parts { list-style: none; padding: 0; margin: 0; }
 .part { padding: 6px 0; border-bottom: 1px solid #8884; }

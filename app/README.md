@@ -34,6 +34,14 @@ Con una sesión creada una vez por ti en tu terminal (`node research/cloud/login
 - Panel: tarjeta «Avisos» (lista accesible, `role="log"`, la gravedad va en el texto) y botón opcional «Activar avisos del navegador» (Notification API, sin sonido, solo con la pestaña oculta; se activa con un clic y se recuerda en `localStorage`).
 - Sin resolver: los códigos `notReady`/`condNotReady` y los de la base (5xx) y el vaciado automático (350-360) no están integrados.
 
+## No molestar (Do Not Disturb)
+Réplica de la función de la app oficial, que allí vive en la nube (en el nativo aparecen `start_dnd` como acción y `dndEnd` como motivo de fin de misión), no en el robot. Aquí la aplica el servidor (`core/dnd.js` lógica pura, `core/dnd-guard.js` vigilante):
+- Franjas (máximo 10) con etiqueta de la app (Momento de tranquilidad, Hora de la siesta, Noche de películas, Reunión semanal o Personalizada con nombre), días y hora de inicio/fin; si el fin es anterior al inicio la franja acaba al día siguiente. Hora local del equipo que ejecuta el servidor. Se guardan en `app/data/dnd.json` (`LIBREROOMBA_DND_FILE` cambia la ruta, para pruebas).
+- Al **empezar** una franja, la misión en curso termina (orden `dock`). Una misión de la **programación** del robot (`initiator: "schedule"`) que arranca desde la base durante una franja se manda a la base («Programación bloqueada por No molestar»). Las que inicia el usuario (botón, panel, app) se respetan; el panel pide confirmación al pulsar Limpiar, como la app.
+- Solo actúa en transiciones: arrancar el servidor o reconectar en mitad de una franja no termina la misión en curso. Antirrebote de 2 min entre órdenes `dock`.
+- Límites: solo funciona con el servidor en marcha y conectado; la programación vive en el robot y no se puede impedir que empiece, solo terminarla; no hay forma conocida de silenciar los sonidos del robot. La app oficial desactiva las programaciones que chocan con una franja; aquí solo se avisa (`conflicts.schedule` en `/api/dnd` y `warnings` en `POST /api/schedule`).
+- `GET /api/dnd` → `{ items, active, conflicts: { overlaps, schedule } }`; `POST /api/dnd {items}` guarda (400 si no es válido). `/api/state` incluye `dnd` (franja activa y hora de fin) para el aviso del panel; los cambios de franja se avisan (`dnd-started`, `dnd-ended`, `dnd-ended-mission`, `dnd-blocked-schedule`, `dnd-dock-failed`).
+
 ## Datos del robot
 La IP, el BLID y la contraseña son datos privados y no están en el repositorio. La contraseña se obtiene con `research/get-password.js <ip>` (mantener HOME hasta que parpadee el icono Wi-Fi).
 

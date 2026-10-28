@@ -18,7 +18,7 @@ Leyenda de dependencias: **R** = necesita el robot (MQTT local), **N** = necesit
 | Robot Name ("What would you like to name your robot?") | nombre | `name` | sí | R |
 | Schedules (Cleaning, Do Not Disturb, conflictos, máximo de eventos) | programación semanal | `cleanSchedule2` | sí (limpieza; sin DND) | R |
 | Pausar programación | hold de programación | `schedHold` | sí | R |
-| Do Not Disturb (Quiet time, Nap, Movie night…) | franjas sin molestar de la app | No es del robot: lo gestiona la app/nube | no | N |
+| Do Not Disturb (Quiet time, Nap, Movie night…) | franjas sin molestar de la app | No es del robot: en la app es de la nube (`start_dnd`, `dndEnd` en `libcore_base.so`; `history_start_refuse_70`) | sí (en el servidor: termina misiones y bloquea la programación con `dock`; sin silenciar sonidos) | N (oficial) / R (propio) |
 | History (Area / Dirt / Lifetime, "View All") | misiones, área, suciedad | `GetMissionHistory` (nube), `bbmssn`, telemetría | parcial (historial local propio, sin probar con misión real) | R (propio) / N (oficial) |
 | Robot Health / Product Health (partes, "Did you replace the part?") | desgaste de piezas | `bbrun`, `bbchg`, `PreventativeMaintenance`, `GetRobotParts` | parcial (contadores en mantenimiento) | R |
 | Maintenance (limpieza de la base, Pad Wash) | pasos guiados | solo textos de ayuda; Pad Wash no aplica a la i1+ | no | — |

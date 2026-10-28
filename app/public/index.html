@@ -19,6 +19,7 @@
       <p id="error" class="notice hidden" role="alert"></p>
       <p id="auth" class="notice hidden" role="alert"></p>
       <p id="bin" class="notice hidden" role="status">El depósito está lleno.</p>
+      <p id="dnd-banner" class="notice dnd-banner hidden" role="status"></p>
       <div class="controls" role="group" aria-label="Control de limpieza">
         <button data-command="start">Limpiar</button><button data-command="pause">Pausa</button>
         <button data-command="resume">Reanudar</button><button data-command="stop">Parar</button>
@@ -41,6 +42,14 @@
     <section class="card">
       <h2>Programación semanal</h2>
       <div id="schedule-body"></div>
+    </section>
+    <section class="card" aria-labelledby="dnd-title">
+      <h2 id="dnd-title">No molestar</h2>
+      <p id="dnd-status" class="cloud-msg" role="status"></p>
+      <div id="dnd-body"></div>
+      <p id="dnd-conflicts" class="notice hidden" role="alert"></p>
+      <div id="dnd-actions"><button type="button" id="dnd-add">Añadir</button> <button type="button" id="dnd-save">Guardar</button></div>
+      <p id="dnd-msg" class="cloud-msg" role="status"></p>
     </section>
     <section class="card">
       <h2>Estado y mantenimiento</h2>
@@ -103,6 +112,7 @@
   <script src="maintenance.js"></script>
   <script src="history.js"></script>
   <script src="schedule.js"></script>
+  <script src="dnd.js"></script>
   <script src="parts.js"></script>
   <script src="cloud.js"></script>
 </body>

@@ -17,6 +17,7 @@ function render(data) {
   const error = document.querySelector('#error'); const hasError = data.error && data.error !== 0;
   error.textContent = hasError ? `Error del robot: ${data.error}` : ''; error.classList.toggle('hidden', !hasError);
   document.querySelector('#bin').classList.toggle('hidden', !data.bin?.full);
+  const banner = document.querySelector('#dnd-banner'); banner.textContent = data.dnd ? `${data.dnd.label} está activo hasta las ${data.dnd.until}.` : ''; banner.classList.toggle('hidden', !data.dnd);
   for (const key of PREF_KEYS) {
     const input = document.querySelector(`#pref-${key}`); const value = data.prefs?.[key];
     input.disabled = !data.connected || value === undefined;
@@ -72,6 +73,11 @@ for (const key of PREF_KEYS) {
   const input = document.querySelector(`#pref-${key}`);
   input.addEventListener('change', () => setPref(key, input.type === 'checkbox' ? input.checked : input.type === 'text' ? input.value : Number(input.value)));
 }
-buttons.forEach((button) => button.addEventListener('click', () => { if (button.dataset.confirm && !confirm(button.dataset.confirm)) return; command(button.dataset.command); }));
+buttons.forEach((button) => button.addEventListener('click', () => {
+  if (button.dataset.confirm && !confirm(button.dataset.confirm)) return;
+  // Como la app oficial: limpiar durante No molestar pide confirmación (la misión iniciada a mano se respeta)
+  if (button.dataset.command === 'start' && current.dnd && !confirm(`¿Estás seguro/a? Tu hogar está en "${current.dnd.label}" hasta las ${current.dnd.until}.`)) return;
+  command(button.dataset.command);
+}));
 function connect() { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; const ws = new WebSocket(`${protocol}://${location.host}/ws`); ws.onmessage = (event) => { const data = JSON.parse(event.data); if (data.notification) window.dispatchEvent(new CustomEvent('lr-notification', { detail: data.notification })); else render(data); }; ws.onclose = () => setTimeout(connect, 1500); }
 connect();

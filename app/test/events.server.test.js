@@ -5,8 +5,8 @@ const { spawn } = require('node:child_process');
 const path = require('node:path');
 const WebSocket = require('ws');
 
-function start(port) {
-  const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), '--mock'], { env: { ...process.env, PORT: String(port) }, stdio: ['ignore', 'pipe', 'inherit'] });
+function start(port, env = {}) {
+  const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js'), '--mock'], { env: { ...process.env, PORT: String(port), ...env }, stdio: ['ignore', 'pipe', 'inherit'] });
   const ready = new Promise((resolve, reject) => {
     child.once('error', reject);
     child.once('exit', (code) => reject(new Error(`el servidor salió con código ${code} (¿puerto ocupado?)`)));
@@ -43,4 +43,25 @@ test('/api/events: vacío al arrancar y, tras una misión simulada, un único av
   assert.equal(pushed.length, 1, 'el WebSocket recibió el mismo aviso');
   assert.equal(pushed[0].id, events[0].id);
   assert.ok(!('notification' in events[0]));
+});
+
+test('/api/dnd: guarda franjas, devuelve conflictos y rechaza datos no válidos (archivo temporal)', async (t) => {
+  const fs = require('node:fs');
+  const file = path.join(fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'lr-dnd-')), 'dnd.json');
+  const s = start(3197, { LIBREROOMBA_DND_FILE: file }); t.after(() => s.child.kill()); await s.ready;
+  assert.deepEqual(await (await fetch(`${s.url}/api/dnd`)).json(), { items: [], active: null, conflicts: { overlaps: [], schedule: [] } });
+  const w = { enabled: true, label: 'quiet', days: [1], start: { hour: 9, min: 0 }, end: { hour: 11, min: 0 } };
+  const saved = await post(`${s.url}/api/dnd`, { items: [w, { ...w, label: 'nap' }] });
+  assert.equal(saved.status, 200);
+  const body = await saved.json();
+  assert.equal(body.items.length, 2);
+  assert.deepEqual(body.conflicts.overlaps, [[0, 1]]);
+  assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).length, 2, 'guardado en el archivo indicado');
+  const bad = await post(`${s.url}/api/dnd`, { items: [{ ...w, days: [9] }] });
+  assert.equal(bad.status, 400);
+  assert.match((await bad.json()).error, /día/);
+  const sched = await post(`${s.url}/api/schedule`, { items: [{ enabled: true, start: { day: [1], hour: 10, min: 0 } }] });
+  assert.equal(sched.status, 200);
+  assert.deepEqual((await sched.json()).warnings, [{ schedule: 0, dnd: 0, day: 1 }]);
+  assert.ok('dnd' in await (await fetch(`${s.url}/api/state`)).json(), 'el resumen incluye el estado de No molestar');
 });

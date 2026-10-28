@@ -6,7 +6,7 @@ const { describe } = require('./errors');
 
 const ACTIVE = new Set(['run', 'hmMidMsn', 'hmPostMsn', 'hmUsrDock']);   // fases en las que hay una misión en curso
 // Antirrebote por tipo (ms); lo no listado usa cooldownMs. Misión terminada/detenida no se repite nunca porque ya depende de una transición.
-const COOLDOWNS = { 'mission-finished': 0, 'mission-stopped': 0, 'robot-reconnected': 0, 'auth-recovered': 0 };
+const COOLDOWNS = { 'mission-finished': 0, 'mission-stopped': 0, 'robot-reconnected': 0, 'auth-recovered': 0, 'dnd-started': 0, 'dnd-ended': 0 };
 
 class Notifier extends EventEmitter {
   constructor(core, { lowBattery = 15, rearmBattery = 20, cooldownMs = 60000, disconnectGraceMs = 5000, max = 50, now = Date.now, lang = 'es', authHelp = '' } = {}) {
@@ -29,6 +29,9 @@ class Notifier extends EventEmitter {
   }
 
   list() { return this._events.slice().reverse(); }   // más reciente primero
+
+  // Avisos de otros módulos (p. ej. No molestar), con el mismo antirrebote por tipo
+  notify(type, severity, title, message, data = {}) { return this._emit(type, severity, title, message, data); }
 
   stop() { clearTimeout(this._disconnectTimer); this._disconnectTimer = null; }
 

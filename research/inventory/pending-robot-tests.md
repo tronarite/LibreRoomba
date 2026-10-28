@@ -9,6 +9,8 @@ Siempre: guardar valor previo, restaurar, parar la web app antes de scripts de r
 - [x] Telemetría de mapa durante una misión: probado 2026-10-24 (110 s), no llega nada por MQTT local.
 - [ ] Orden `clean` por regiones (requiere pmap; solo observar rechazo).
 
+- [ ] No molestar (`app/core/dnd-guard.js`): confirmar que una misión de la programación reporta `cleanMissionStatus.initiator: "schedule"` (solo visto `manual` en el robot; `schedule` es lo que lleva `cleanSchedule2.cmd`) y que `dock` la termina limpia (sin error ni misión "detenida" en el historial). Prueba sin cambiar la programación: crear una franja que empiece en 1-2 min durante una limpieza manual y observar.
+
 ## Añadidas desde la sección "Experimental" del panel (app/, `LIBREROOMBA_EXPERIMENTAL=1`)
 - [x] `evac`: probado 2026-10-24, funciona (ver protocol-notes.md). Promovido a botón normal con confirmación.
 - [ ] `chrgLrPtrn` (0-3): ver si cambian la luz y si el robot los reporta; el rango 0-3 es una suposición.

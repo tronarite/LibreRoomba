@@ -13,6 +13,8 @@ const { createFakeCloud } = require('./core/fake-cloud');
 const { normalizeParts } = require('./core/parts');
 const { mergeMissions } = require('./core/mapmerge');
 const { Notifier } = require('./core/notifier');
+const dnd = require('./core/dnd');
+const { DndGuard } = require('./core/dnd-guard');
 
 const mockMode = process.argv.includes('--mock') || process.env.MOCK === '1';
 if (!mockMode && (!process.env.ROBOT_IP || !process.env.ROBOT_BLID)) {
@@ -55,6 +57,17 @@ const AUTH_HELP = 'El robot rechaza la contraseña local (¿se ha vuelto a empar
 const VERSION = require('./package.json').version;
 // Avisos (depósito lleno, misión terminada, errores...): solo transiciones, con antirrebote; en memoria (últimos 50)
 const notifier = new Notifier(core, { authHelp: AUTH_HELP });
+// No molestar: franjas guardadas en app/data/dnd.json; el vigilante manda el robot a la base según la semántica de la app oficial
+const dndStore = dnd.createDndStore(process.env.LIBREROOMBA_DND_FILE || path.join(__dirname, 'data', 'dnd.json'));   // LIBREROOMBA_DND_FILE: pruebas
+const dndGuard = new DndGuard(core, { items: dndStore.list, notify: (...args) => notifier.notify(...args) });
+function dndState() {
+  const items = dndStore.list();
+  const hit = dndGuard.active();
+  return {
+    items, active: hit ? { index: hit.index, label: hit.label, until: hit.until } : null,
+    conflicts: { overlaps: dnd.overlaps(items), schedule: dnd.scheduleConflicts(items, core.state.cleanSchedule2) }
+  };
+}
 
 function getPath(object, paths) {
   for (const dottedPath of paths) {
@@ -86,6 +99,7 @@ function summary() {
       language: getPath(state, ['langs2.sLang']), languagesAvailable: getPath(state, ['langs2.dLangs.langs']),
       dockFirmware: getPath(state, ['dock.fwVer']), evacAllowed: state.evacAllowed
     },
+    dnd: dndState().active,
     experimental: EXPERIMENTAL,
     experimentalPrefs: { odoaMode: state.odoaMode, suctionLevel: state.suctionLevel, chrgLrPtrn: state.chrgLrPtrn },
     lastUpdate: core.lastUpdate
@@ -98,6 +112,7 @@ function broadcast() {
 }
 core.on('state', () => { history.observe(core.state); broadcast(); });
 core.on('connected', broadcast);
+dndGuard.on('change', broadcast);
 // Los avisos viajan por el mismo WebSocket con otra forma ({ notification }); el panel los distingue del resumen de estado
 notifier.on('event', (event) => {
   const message = JSON.stringify({ notification: event });
@@ -175,7 +190,21 @@ app.get('/api/cloud/map', async (req, res) => {
 app.get('/api/maintenance', (_req, res) => res.json(summarize(core.state)));
 app.get('/api/raw', (_req, res) => res.json(core.state));
 app.get('/api/schedule', (_req, res) => res.json(core.state.cleanSchedule2 || []));
-app.post('/api/schedule', (req, res) => handle(res, () => core.setSchedule((req.body || {}).items)));
+// warnings: programaciones que empezarían dentro de una franja de No molestar (no se desactivan solas, a diferencia de la app)
+app.post('/api/schedule', (req, res) => {
+  try {
+    const items = (req.body || {}).items;
+    core.setSchedule(items);
+    res.json({ ok: true, warnings: dnd.scheduleConflicts(dndStore.list(), items) });
+  } catch (error) { res.status(STATUS[error.code] || 500).json({ error: error.message }); }
+});
+app.get('/api/dnd', (_req, res) => res.json(dndState()));
+app.post('/api/dnd', (req, res) => {
+  try { dndStore.set((req.body || {}).items); } catch (error) { return res.status(400).json({ error: error.message }); }
+  dndGuard.tick();
+  broadcast();
+  res.json(dndState());
+});
 app.post('/api/pref', (req, res) => handle(res, () => core.setPref((req.body || {}).key, (req.body || {}).value)));
 app.post('/api/cmd', (req, res) => handle(res, () => core.command((req.body || {}).command)));
 app.post('/api/experimental/pref', (req, res) => handle(res, () => core.setExperimentalPref((req.body || {}).key, (req.body || {}).value)));
@@ -190,5 +219,6 @@ server.on('upgrade', (request, socket, head) => {
 wss.on('connection', (ws) => ws.send(JSON.stringify(summary())));
 
 core.start();
+dndGuard.start();
 if (mockMode) console.log('Modo simulado activo: no se conectará al robot.');
 server.listen(PORT, HOST, () => console.log(`LibreRoomba disponible en http://${HOST}:${PORT}`));

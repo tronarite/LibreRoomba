@@ -46,6 +46,9 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
   // Simula que el robot cambia su contraseña (p. ej. tras emparejarlo de nuevo): corta a los clientes y rechaza al resto.
   robot.changePassword = (next) => { robot.password = next; robot.drop(); };
 
+  // Arranque por la programación del propio robot (cleanSchedule2) o por su botón: no pasa por el topic `cmd`
+  robot.startBy = (initiator) => robot.report({ cleanMissionStatus: { phase: 'run', cycle: 'clean', initiator } });
+
   robot.drop = () => { const lost = robot.clients; robot.clients = []; lost.forEach((c) => c.emit('close')); };   // corte de red
 
   function handle(topic, body) {
@@ -54,7 +57,8 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
     const phase = PHASE[body.command];
     if (!phase) return;   // find y desconocidos: sin cambio de fase
     const returns = body.command === 'dock' || body.command === 'evac';
-    robot.report({ cleanMissionStatus: { phase, cycle: returns ? 'none' : 'clean' } });
+    const started = body.command === 'start' ? { initiator: body.initiator || 'localApp' } : {};   // el robot real reporta quién inició la misión
+    robot.report({ cleanMissionStatus: { phase, cycle: returns ? 'none' : 'clean', ...started } });
     if (returns) {
       const timer = setTimeout(() => robot.report({ cleanMissionStatus: { phase: 'charge', cycle: 'none' } }), dockDelayMs);
       if (timer.unref) timer.unref();
