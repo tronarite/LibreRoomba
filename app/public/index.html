@@ -106,6 +106,14 @@
         </ul>
         <p id="cloud-map-summary" class="cloud-msg"></p>
         <p id="cloud-map-stalls" class="cloud-msg"></p>
+        <h3>Habitaciones propias</h3>
+        <p class="cloud-msg">Solo de LibreRoomba: el robot no las conoce (la i1+ no guarda mapas). Escribe un nombre, pulsa «Dibujar» y arrastra sobre el mapa.</p>
+        <div class="room-form">
+          <label>Nombre <input type="text" id="room-name" maxlength="30"></label>
+          <button type="button" id="room-draw">Dibujar</button>
+        </div>
+        <p id="rooms-msg" class="cloud-msg" role="status"></p>
+        <ul id="rooms-list" class="rooms-list"></ul>
         <button type="button" id="cloud-map-reload">Actualizar mapa</button>
       </div>
     </section>

@@ -38,7 +38,7 @@
   }
 
   // --- Mapa ---
-  const state = { map: null, cells: null };
+  const state = { map: null, cells: null, rooms: [], draft: null, drawing: false };
   const STALL_LABELS = { side_brush_stall_detected: 'cepillo lateral atascado', brush_stall_detected: 'cepillo principal atascado', wheel_dropped: 'rueda caída o levantada', start_evade: 'maniobra de evasión al arrancar', stasis_detected: 'robot inmovilizado' };
   const color = (t) => `rgb(${Math.round(70 + 116 * t)},${Math.round(120 + 110 * t)},${Math.round(190 + 63 * t)})`;   // de azul medio a azul claro: más misiones = más claro, buen contraste sobre el fondo oscuro
 
@@ -69,6 +69,13 @@
         ctx.globalAlpha = 0.85; ctx.fillStyle = '#fb923c'; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = '#1c1917'; ctx.lineWidth = 1.5; ctx.stroke();
       }
     }
+    ctx.font = '13px sans-serif'; ctx.lineWidth = 2;
+    for (const r of state.rooms) {
+      ctx.strokeStyle = '#4ade80'; ctx.setLineDash([]); ctx.strokeRect(px(r.x0), py(r.y1), px(r.x1) - px(r.x0), py(r.y0) - py(r.y1));
+      ctx.fillStyle = '#052e16'; ctx.fillText(r.name, px(r.x0) + 5, py(r.y1) + 16);     // sombra para leer sobre el azul claro
+      ctx.fillStyle = '#bbf7d0'; ctx.fillText(r.name, px(r.x0) + 4, py(r.y1) + 15);
+    }
+    if (state.draft) { const d = state.draft; ctx.strokeStyle = '#fde047'; ctx.setLineDash([5, 4]); ctx.strokeRect(px(d.x0), py(d.y1), px(d.x1) - px(d.x0), py(d.y0) - py(d.y1)); ctx.setLineDash([]); }
     ctx.beginPath(); ctx.arc(px(map.dock.x), py(map.dock.y), 7, 0, Math.PI * 2);
     ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3; ctx.stroke();
   }
@@ -94,9 +101,61 @@
     }
   }
 
+  // --- Habitaciones propias (se guardan en el servidor, app/data/rooms.json) ---
+  const roomsList = document.querySelector('#rooms-list'), roomsMsg = document.querySelector('#rooms-msg');
+  const nameInput = document.querySelector('#room-name'), drawButton = document.querySelector('#room-draw');
+  function renderRooms() {
+    roomsList.replaceChildren();
+    for (const [i, r] of state.rooms.entries()) {
+      const li = document.createElement('li');
+      const cover = r.coveragePct == null ? '' : `, ${r.coveragePct} % recorrido`;
+      const text = document.createElement('span'); text.textContent = `${r.name}: ${r.areaM2.toFixed(1)} m²${cover}`;
+      const del = document.createElement('button'); del.type = 'button'; del.textContent = 'Borrar'; del.setAttribute('aria-label', `Borrar ${r.name}`);
+      del.addEventListener('click', () => saveRooms(state.rooms.filter((_, k) => k !== i)));
+      li.append(text, del); roomsList.append(li);
+    }
+    draw();
+  }
+  async function saveRooms(list) {
+    try {
+      const response = await fetch('/api/rooms', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rooms: list.map(({ name, x0, y0, x1, y1 }) => ({ name, x0, y0, x1, y1 })) }) });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || `Error ${response.status}`);
+      state.rooms = body.rooms; roomsMsg.textContent = ''; renderRooms();
+    } catch (error) { roomsMsg.textContent = error.message; }
+  }
+  async function loadRooms() {
+    try { const response = await fetch('/api/rooms'); state.rooms = (await response.json()).rooms || []; renderRooms(); } catch (_) { /* sin habitaciones */ }
+  }
+  const toMeters = (event) => {
+    const box = canvas.getBoundingClientRect(), map = state.map;
+    const fx = (event.clientX - box.left) / box.width, fy = (event.clientY - box.top) / box.height;
+    return { x: map.origin.x + fx * map.width * map.resolution, y: map.origin.y + (1 - fy) * map.height * map.resolution };
+  };
+  drawButton.addEventListener('click', () => {
+    if (!nameInput.value.trim()) { roomsMsg.textContent = 'Escribe primero el nombre de la habitación.'; nameInput.focus(); return; }
+    state.drawing = true; canvas.classList.add('drawing'); roomsMsg.textContent = 'Arrastra sobre el mapa para marcar la habitación.';
+  });
+  let anchor = null;
+  canvas.addEventListener('pointerdown', (event) => {
+    if (!state.drawing || !state.map) return;
+    anchor = toMeters(event); canvas.setPointerCapture(event.pointerId);
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (!anchor) return;
+    const p = toMeters(event); state.draft = { x0: Math.min(anchor.x, p.x), y0: Math.min(anchor.y, p.y), x1: Math.max(anchor.x, p.x), y1: Math.max(anchor.y, p.y) }; draw();
+  });
+  canvas.addEventListener('pointerup', () => {
+    if (!anchor) return;
+    const rect = state.draft; anchor = null; state.draft = null; state.drawing = false; canvas.classList.remove('drawing');
+    if (!rect) { roomsMsg.textContent = ''; draw(); return; }
+    saveRooms([...state.rooms, { name: nameInput.value.trim(), ...rect }]); nameInput.value = '';
+  });
+
   document.querySelector('#layer-borders').addEventListener('change', draw);
   document.querySelector('#layer-stalls').addEventListener('change', draw);
   document.querySelector('#cloud-map-reload').addEventListener('click', loadMap);
   loadHistory();
   loadMap();
+  loadRooms();
 })();

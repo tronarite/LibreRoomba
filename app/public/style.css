@@ -61,3 +61,5 @@ button.secondary[aria-pressed="true"]{background:#14532d}
 .part { padding: 6px 0; border-bottom: 1px solid #8884; }
 .part-pronto { color: #b45309; }
 .part-agotada { color: #b91c1c; font-weight: 600; }
+
+.room-form{display:flex;gap:10px;align-items:end;margin:.4rem 0}.room-form label{flex:1}.room-form input{width:100%;box-sizing:border-box;min-height:40px}.rooms-list{list-style:none;padding:0;margin:.4rem 0 1rem}.rooms-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #334155}.rooms-list button{min-height:34px;padding:0 12px;background:#fca5a5}#cloud-map.drawing{cursor:crosshair}

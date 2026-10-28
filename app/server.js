@@ -8,6 +8,7 @@ const { createFakeRobot } = require('./core/fake-robot');
 const { discover } = require('./core/discovery');
 const { createHistory } = require('./history');
 const { summarize } = require('./maintenance');
+const { createRooms, measure } = require('./rooms');
 const { createCloud, normalizeMission, mapRef } = require('./core/cloud');
 const { createFakeCloud } = require('./core/fake-cloud');
 const { normalizeParts } = require('./core/parts');
@@ -33,6 +34,7 @@ function robotPassword() {
 }
 
 const history = createHistory(path.join(__dirname, 'data', 'history.json'));
+const rooms = createRooms(process.env.LIBREROOMBA_ROOMS_FILE || path.join(__dirname, 'data', 'rooms.json'));
 let core;
 if (mockMode) {
   // MOCK_AUTH_FAIL=1 (solo con --mock, para pruebas): el robot simulado rechaza la contraseña.
@@ -199,6 +201,17 @@ app.get('/api/cloud/map', async (req, res) => {
     if (!map) return res.status(404).json({ error: 'Todavía no hay mapas de misiones con base reconocida.', code: 'empty' });
     res.json(map);
   } catch (error) { cloudFail(res, error); }
+});
+app.get('/api/rooms', async (_req, res) => {
+  let map = null;
+  try { map = await buildCloudMap(60); } catch (_) { /* sin nube: se devuelven sin cobertura */ }
+  res.json({ rooms: measure(rooms.list(), map) });
+});
+app.put('/api/rooms', async (req, res) => {
+  try { rooms.set((req.body || {}).rooms); } catch (error) { return res.status(400).json({ error: error.message }); }
+  let map = null;
+  try { map = await buildCloudMap(60); } catch (_) { /* igual */ }
+  res.json({ rooms: measure(rooms.list(), map) });
 });
 app.get('/api/maintenance', (_req, res) => res.json(summarize(core.state)));
 app.get('/api/raw', (_req, res) => res.json(core.state));
