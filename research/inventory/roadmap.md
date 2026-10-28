@@ -30,4 +30,8 @@ Mapas inteligentes (Imprint), editar mapa y habitaciones, zonas prohibidas (KOZ)
 3. **Mapas**: ver qué activa `optFeats.pmaps` (análisis de `libcore_jni.so` y de la API `disc-*.iot.irobotapi.com`) y reconstruir el mapa con telemetría `vslam`.
 4. **Más allá**: según lo que se descubra.
 
+## 4. Pendiente pedido por el usuario (2026-10-28, solo investigar)
+- Habitaciones: guardarlas en el mapa y limpiar habitaciones concretas (la i1+ rechaza `clean`+`regions` con error 224 por falta de pmaps). Ver CLAUDE.md, pendiente 5.
+- Vista en tiempo real de lo que ve el robot (sensores/pose durante la misión). Ver CLAUDE.md, pendiente 6.
+
 Reglas: cambios a `beta`, merge a `main` solo con tu confirmación; ninguna prueba cambia ajustes sin avisarte; guardar el valor previo para poder revertir.
