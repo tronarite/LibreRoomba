@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { createLocalMap } = require('../core/localmap');
+const { createLocalMap, DEFAULT_RESOLUTION } = require('../core/localmap');
 
 const file = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'lmap-')), 'm.json');
 const cellAt = (map, x, y) => {
@@ -78,4 +78,20 @@ test('servidor mock: la misión se registra en el mapa propio al terminar', asyn
   const map = await res.json();
   assert.equal(map.missions, 1);
   assert.equal(map.source, 'local');
+});
+
+test('seed: copia un mapa ya fusionado a un mapa propio vacío, conserva desgastes y no pisa uno existente', () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'lm-seed-')), 'localmap.json');
+  const res = DEFAULT_RESOLUTION;
+  const grid = Buffer.from([0, 3, 0, 5]).toString('base64');   // 2x2: dos celdas recorridas
+  const snap = { resolution: res, width: 2, height: 2, origin: { x: 2 * res, y: -1 * res }, missions: 7, grid, stalls: [{ x: 1, y: 1 }], stallTotals: { n: 2 }, borders: [] };
+  const map = createLocalMap(file);
+  assert.equal(map.seed(snap), true);
+  const out = map.snapshot();
+  assert.equal(out.coveredCells, 2);
+  assert.equal(out.missions, 7);
+  assert.deepEqual(out.stalls, [{ x: 1, y: 1 }]);
+  assert.equal(map.seed(snap), false);                         // ya hay datos: no se vuelve a sembrar
+  assert.equal(createLocalMap(file).snapshot().coveredCells, 2);   // persistido en disco
+  assert.equal(createLocalMap(path.join(path.dirname(file), 'otro.json')).seed({ ...snap, resolution: 0.5 }), false);   // otra resolución: se rechaza
 });

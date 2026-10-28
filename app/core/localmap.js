@@ -13,11 +13,13 @@ const key = (cx, cy) => `${cx}|${cy}`;
 function createLocalMap(filePath, { resolution = DEFAULT_RESOLUTION } = {}) {
   let counts = new Map();   // celda -> nº de misiones que pasaron
   let missions = 0;
+  let extra = null;         // desgastes, bordes y totales de un mapa sembrado desde la nube (ya descargado)
   try {
     const saved = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     if (saved && saved.resolution === resolution && Array.isArray(saved.cells)) {
       counts = new Map(saved.cells.filter((c) => Array.isArray(c) && c.length === 3 && c.every(Number.isInteger)).map(([x, y, n]) => [key(x, y), { x, y, n }]));
       missions = Number.isInteger(saved.missions) ? saved.missions : 0;
+      extra = saved.extra && typeof saved.extra === 'object' ? saved.extra : null;
     }
   } catch (_) { /* sin mapa previo */ }
 
@@ -28,7 +30,7 @@ function createLocalMap(filePath, { resolution = DEFAULT_RESOLUTION } = {}) {
     try {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       const tmp = `${filePath}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify({ resolution, missions, cells: [...counts.values()].map((c) => [c.x, c.y, c.n]) }));
+      fs.writeFileSync(tmp, JSON.stringify({ resolution, missions, extra, cells: [...counts.values()].map((c) => [c.x, c.y, c.n]) }));
       fs.renameSync(tmp, filePath);
     } catch (_) { /* sin disco: solo en memoria */ }
   }
@@ -67,6 +69,20 @@ function createLocalMap(filePath, { resolution = DEFAULT_RESOLUTION } = {}) {
     return true;
   }
 
+  // Siembra el mapa propio con un mapa ya fusionado (p. ej. el de la nube guardado en disco), solo si está vacío:
+  // así el mapa deja de depender de la nube y las misiones nuevas se suman encima.
+  function seed(snap) {
+    if (counts.size || !snap || snap.resolution !== resolution || !snap.grid || !(snap.width > 0) || !(snap.height > 0)) return false;
+    const bytes = Buffer.from(snap.grid, 'base64');
+    if (bytes.length !== snap.width * snap.height) return false;
+    const ox = Math.round(snap.origin.x / resolution), oy = Math.round(snap.origin.y / resolution);
+    for (let i = 0; i < bytes.length; i++) if (bytes[i]) { const x = ox + (i % snap.width), y = oy + Math.floor(i / snap.width); counts.set(key(x, y), { x, y, n: bytes[i] }); }
+    missions = Number.isInteger(snap.missions) ? snap.missions : 0;
+    extra = { stalls: snap.stalls || [], stallTotals: snap.stallTotals || {}, borders: snap.borders || [] };
+    save();
+    return counts.size > 0;
+  }
+
   function snapshot() {
     if (!counts.size) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, peak = 0;
@@ -79,13 +95,13 @@ function createLocalMap(filePath, { resolution = DEFAULT_RESOLUTION } = {}) {
       resolution, skipped: 0, origin: { x: Math.round(minX * resolution * 1000) / 1000, y: Math.round(minY * resolution * 1000) / 1000 },
       width, height, missions, peak, coveredCells: counts.size, areaM2: Math.round(counts.size * resolution * resolution * 10) / 10,
       alignedBy: { dock: missions, start: 0, none: 0 }, dock: { x: 0, y: 0 }, grid: bytes.toString('base64'),
-      stalls: [], stallTotals: {}, borders: [], source: 'local'
+      stalls: extra ? extra.stalls : [], stallTotals: extra ? extra.stallTotals : {}, borders: extra ? extra.borders : [], source: 'local'
     };
   }
 
-  function reset() { counts = new Map(); missions = 0; current = null; last = null; save(); }
+  function reset() { counts = new Map(); missions = 0; extra = null; current = null; last = null; save(); }
 
-  return { add, endMission, snapshot, reset, get missions() { return missions; } };
+  return { add, endMission, seed, snapshot, reset, get missions() { return missions; } };
 }
 
 module.exports = { createLocalMap, DEFAULT_RESOLUTION };

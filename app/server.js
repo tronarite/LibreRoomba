@@ -54,7 +54,7 @@ if (mockMode) {
   // LIBREROOMBA_DISCOVER=1: si el robot deja de responder, buscar su IP nueva por UDP (puerto 5678) filtrando por BLID.
   const blid = process.env.ROBOT_BLID;
   const discovering = process.env.LIBREROOMBA_DISCOVER === '1' ? () => discover({ blid }) : null;
-  core = new RobotCore({ ip: process.env.ROBOT_IP, blid, password, experimental: EXPERIMENTAL, discover: discovering });
+  core = new RobotCore({ ip: process.env.ROBOT_IP, blid, password, experimental: EXPERIMENTAL, positionPolling: true, discover: discovering });
   core.on('ip-changed', ({ to }) => console.log(`El robot cambió de IP; ahora responde en ${to}.`));
 }
 core.on('error', (error) => console.error('Error MQTT:', error.message));
@@ -140,10 +140,22 @@ const missionPhase = () => (core.state.cleanMissionStatus || {}).phase;
 let wasRunning = false;
 core.on('state', () => { const running = missionPhase() === 'run'; if (wasRunning && !running) localMap.endMission(); wasRunning = running; });
 core.on('position', (p) => { if (missionPhase() === 'run') localMap.add(p.x, p.y); });
-if (EXPERIMENTAL) {
+if (EXPERIMENTAL || !mockMode) {   // pedir la posición es solo lectura: el mapa propio no depende del modo experimental
   const poll = setInterval(() => { if (core.connected && missionPhase() === 'run') { try { core.requestPosition(); } catch (_) { /* sin conexión */ } } }, POSITION_POLL_MS);
   if (poll.unref) poll.unref();
 }
+// Durante una misión se graba todo lo que manda el robot (tope 5 MB) para conocer el formato real de la posición
+const CAPTURE_FILE = path.join(__dirname, 'data', 'mission-capture.jsonl');
+const CAPTURE_MAX = 5 * 1024 * 1024;
+let captured = 0;
+try { captured = fs.statSync(CAPTURE_FILE).size; } catch (_) { /* sin captura previa */ }
+if (!mockMode) core.on('raw', ({ topic, text }) => {
+  if (missionPhase() !== 'run' || captured >= CAPTURE_MAX || topic === 'wifistat') return;
+  const line = JSON.stringify({ t: new Date().toISOString(), topic, text: text.length > 4000 ? `${text.slice(0, 4000)}…` : text }).replace(/[0-9A-F]{32}/g, '<id>') + '\n';
+  try { fs.mkdirSync(path.dirname(CAPTURE_FILE), { recursive: true }); fs.appendFileSync(CAPTURE_FILE, line); captured += line.length; } catch (_) { /* sin disco */ }
+});
+// El mapa propio parte de lo que ya está descargado de la nube (en disco); desde entonces no necesita la nube
+if (!mockMode && !localMap.snapshot()) Promise.resolve().then(() => new Promise((r) => setImmediate(r))).then(() => buildCloudMap(200)).then((m) => { if (m) localMap.seed(m); }).catch(() => { /* sin mapas guardados: se irá construyendo con las misiones */ });
 core.on('connected', broadcast);
 dndGuard.on('change', broadcast);
 // Los avisos viajan por el mismo WebSocket con otra forma ({ notification }); el panel los distingue del resumen de estado

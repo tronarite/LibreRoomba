@@ -33,9 +33,9 @@ class RobotCore extends EventEmitter {
   // reconnect.authMin/authMax: espera (ms) entre reintentos cuando el robot rechaza la contraseña (no tiene sentido insistir cada segundo).
   // dockWaitMs: tope de espera entre `stop` y `dock` cuando se manda a la base un robot que está limpiando;
   // dockSettleMs: tiempo que debe seguir parado y con notReady 0 antes del `dock`.
-  constructor({ ip, blid, password, connect = defaultConnect, experimental = false, reconnect = {}, discover = null, discoverAfter = 3, dockWaitMs = 30000, dockSettleMs = 3000 } = {}) {
+  constructor({ ip, blid, password, connect = defaultConnect, experimental = false, positionPolling = false, reconnect = {}, discover = null, discoverAfter = 3, dockWaitMs = 30000, dockSettleMs = 3000 } = {}) {
     super();
-    Object.assign(this, { ip, blid, password, experimental });
+    Object.assign(this, { ip, blid, password, experimental, positionPolling });
     this._dockWaitMs = dockWaitMs;
     this._dockSettleMs = dockSettleMs;
     this._dockAfterStop = null;
@@ -85,7 +85,8 @@ class RobotCore extends EventEmitter {
       this._setConnected(true);
       client.subscribe('#');
     });
-    client.on('message', (_topic, payload) => {
+    client.on('message', (topic, payload) => {
+      this.emit('raw', { topic, text: payload.toString() });
       try {
         const message = JSON.parse(payload.toString());
         if (message && message.state && message.state.reported) this._apply(message.state.reported);
@@ -225,7 +226,7 @@ class RobotCore extends EventEmitter {
 
   // Pide la posición actual al robot (solo lectura). Experimental: formato sin confirmar.
   requestPosition() {
-    this._requireExperimental();
+    if (!this.experimental && !this.positionPolling) this._requireExperimental();   // solo lectura: la activa el servidor para el mapa propio
     this._positionSeq = (this._positionSeq || 0) + 1;
     const reqId = String(this._positionSeq);
     this._publish(policy.POSITION_TOPIC, { reqId, ...policy.POSITION_REQUEST });
