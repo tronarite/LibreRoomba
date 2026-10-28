@@ -8,7 +8,7 @@ Principio: LibreRoomba debe funcionar solo con el robot en la red local. La nube
 | Control, ajustes, programación, No molestar, avisos, errores | MQTT local | ninguna | — (hecho) |
 | Historial de misiones | nube (`/api/cloud/history`) + historial propio (`/api/history`) | opcional | historial propio con `bbmssn`; ampliar con área/duración medidas en la misión |
 | Salud de piezas | nube (`/v1/robots/<blid>/parts`) | **sí** | HECHO: contadores locales (`bbrun.hr`) con vida útil configurable (`app/core/localparts.js`, `/api/parts`) |
-| Mapa de cobertura | nube (UMF por misión) | **sí** | HECHO contra el simulador: mapa propio con la posición pedida al robot (`req`, `core/localmap.js`, `/api/localmap`); falta confirmar RRTP con el robot (formato, topic de respuesta, sistema de coordenadas) |
+| Mapa de cobertura | mapa propio sembrado con los UMF ya descargados (`/api/localmap`, 28 misiones, sin nube) | solo para misiones NUEVAS | **Posición en vivo por MQTT local: inviable en la i1+** (2026-10-28: misión real con `req` cada 2 s, el robot no manda nada; su `cap` no declara `pose`; ver `rrtp-request-values.md`). Las misiones nuevas solo llegan al mapa por los UMF que el robot sube a la nube de iRobot. Para independizarse del todo: que el robot suba a un servidor propio (redirigir `cloudEnv`/`sdiscUrl`, vetado de momento) |
 | Habitaciones | rectángulos propios; cobertura usa el mapa | parcial | cobertura desde el mapa local |
 | Firmware / OTA | nube de iRobot | **sí** | sin alternativa conocida (paquetes firmados); no bloquear la OTA hasta saberlo |
 | Descubrimiento | UDP local | no | — |
