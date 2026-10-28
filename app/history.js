@@ -1,14 +1,35 @@
 const fs = require('fs');
 const path = require('path');
+const errors = require('./core/errors');
 
 const MAX = 200;
 const END_GRACE_MS = 10000;
+
+// Campos añadidos después del primer formato: los registros antiguos los reciben a null al cargar (no se pierde ni se reescribe nada más)
+const NEW_FIELDS = ['initiator', 'endPhase', 'endReason', 'errorSeen', 'errorTitle', 'stuck', 'evacuated'];
+const INITIATORS = { localApp: 'Panel local (LibreRoomba)', rmtApp: 'App de iRobot', schedule: 'Programación', manual: 'Botón del robot', none: null };
+function migrate(m) {
+  if (!m || typeof m !== 'object' || m.unobserved) return m;
+  const out = { ...m };
+  for (const k of NEW_FIELDS) if (!(k in out)) out[k] = null;
+  return out;
+}
+
+// Por qué terminó: prioridad error > atasco > recarga > parada > completada
+function endReason(c, status) {
+  const code = c.errorSeen || status.error || 0;
+  if (code) return 'error';
+  if (c.stuck) return 'stuck';
+  if (c.recharged) return 'lowBattery';
+  if (status.phase === 'stop' && !c.docked) return 'stopped';
+  return 'completed';
+}
 
 function createHistory(filePath) {
   let missions = [];
   try {
     const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    if (Array.isArray(parsed)) missions = parsed;
+    if (Array.isArray(parsed)) missions = parsed.map(migrate);
   } catch (_) {
     missions = [];
   }
@@ -21,6 +42,7 @@ function createHistory(filePath) {
 
   let current = null;
   let endTimer = null;
+  let latest = null;   // último estado visto: el aviso diferido de fin usa este, no el de cuando se programó
 
   function save() {
     try {
@@ -63,10 +85,19 @@ function createHistory(filePath) {
     const durationMin = Number.isFinite(status.mssnM) && status.mssnM > 0
       ? status.mssnM
       : Math.round((now - startedMs) / 60000);
+    const { stuck, recharged, docked, ...base } = current;
+    const code = current.errorSeen || status.error || 0;
+    const dock = (state && state.dock && state.dock.state);
     missions.unshift({
-      ...current,
+      ...base,
       endedAt: new Date(now).toISOString(),
       durationMin,
+      endPhase: status.phase || null,
+      endReason: endReason(current, status),
+      errorSeen: code || null,
+      errorTitle: code ? errors.describe(code).title : null,
+      stuck: stuck ? true : false,
+      evacuated: current.evacuated || dock === 302 || dock === 303 || false,
       errorFinal: status.error || 0,
       batEnd: state ? state.batPct ?? null : null,
       sqftDelta: Number.isFinite(bbrun.sqft) && Number.isFinite(current.sqftStart) ? bbrun.sqft - current.sqftStart : null
@@ -76,11 +107,24 @@ function createHistory(filePath) {
     save();
   }
 
+  // Anota lo que pasa mientras dura la misión y el regreso (la fase final sola no dice si hubo atasco, error o vaciado)
+  function track(state, status) {
+    if (!current) return;
+    if (status.error) current.errorSeen = status.error;
+    if (status.phase === 'stuck') current.stuck = true;
+    if (status.phase === 'recharge') current.recharged = true;
+    if (status.phase === 'hmUsrDock' || status.phase === 'hmMidMsn' || status.cycle === 'dock') current.docked = true;
+    const dock = state && state.dock && state.dock.state;
+    if (dock === 302 || dock === 303 || status.phase === 'evac') current.evacuated = true;
+  }
+
   function observe(state, now = Date.now()) {
     trackCount(state, now);
     const status = (state && state.cleanMissionStatus) || {};
     const bbrun = (state && state.bbrun) || {};
     const running = status.phase === 'run';
+    latest = state;
+    track(state, status);
     if (running && current && status.missionId && current.missionId !== status.missionId) finish(state, now);
     if (running) {
       clearTimeout(endTimer);
@@ -91,22 +135,33 @@ function createHistory(filePath) {
           nMssn: status.nMssn ?? null,
           startedAt: new Date(now).toISOString(),
           cycle: status.cycle || null,
+          initiator: status.initiator && status.initiator !== 'none' ? status.initiator : null,
           batStart: state.batPct ?? null,
           sqftStart: Number.isFinite(bbrun.sqft) ? bbrun.sqft : null
         };
+        track(state, status);
       }
       return;
     }
-    if (current && ['charge', 'stop'].includes(status.phase) && !endTimer) {
-      endTimer = setTimeout(() => { endTimer = null; finish(state, Date.now()); }, END_GRACE_MS);
-      if (endTimer.unref) endTimer.unref();
-    }
+    if (current && ['charge', 'stop'].includes(status.phase) && !endTimer) armEnd(0);
+  }
+
+  // Tras la parada se espera un poco; si el robot vuelve a la base, se espera a que acabe (el vaciado dura ~16 s) hasta 2 min
+  function armEnd(waits) {
+    endTimer = setTimeout(() => {
+      endTimer = null;
+      const phase = latest && latest.cleanMissionStatus && latest.cleanMissionStatus.phase;
+      if (current && current.docked && phase !== 'charge' && phase !== 'run' && waits < 12) return armEnd(waits + 1);
+      if (phase === 'run') return;
+      finish(latest, Date.now());
+    }, END_GRACE_MS);
+    if (endTimer.unref) endTimer.unref();
   }
 
   return { observe, list: () => missions.slice(), _finish: (state, now) => finish(state, now) };
 }
 
-module.exports = { createHistory };
+module.exports = { createHistory, INITIATORS };
 
 if (require.main === module) {
   const assert = require('assert');
