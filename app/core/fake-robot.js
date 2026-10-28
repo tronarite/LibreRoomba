@@ -14,7 +14,7 @@ const PHASE = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 
 
 // opciones: password (si se da, rechaza otras), state (parte del estado inicial), dockDelayMs (tiempo hasta volver a cargar)
 function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
-  const robot = { password, clients: [], published: [], state: deepMerge(JSON.parse(JSON.stringify(INITIAL)), state) };
+  const robot = { password, clients: [], published: [], ignore: new Set(), state: deepMerge(JSON.parse(JSON.stringify(INITIAL)), state) };
 
   robot.report = (delta) => {
     deepMerge(robot.state, delta);
@@ -54,8 +54,10 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000 } = {}) {
   function handle(topic, body) {
     if (topic === 'delta') return robot.report(body.state || {});
     if (topic !== 'cmd') return;
+    if (robot.ignore.has(body.command)) return;   // pruebas: orden que el robot no atiende
     const phase = PHASE[body.command];
     if (!phase) return;   // find y desconocidos: sin cambio de fase
+    if (body.command === 'dock' && robot.state.cleanMissionStatus.phase === 'run') return;   // como la i1+ real: ignora dock mientras limpia
     const returns = body.command === 'dock' || body.command === 'evac';
     const started = body.command === 'start' ? { initiator: body.initiator || 'localApp' } : {};   // el robot real reporta quién inició la misión
     robot.report({ cleanMissionStatus: { phase, cycle: returns ? 'none' : 'clean', ...started } });

@@ -195,3 +195,31 @@ test('descubrimiento: no se usa si el fallo es de contraseña (el robot está ah
   await bad._rediscover();                    // un fallo del descubrimiento no rompe nada
   assert.equal(bad.ip, 'x');
 });
+
+test('base mientras limpia: la i1+ ignora dock en run, así que se envía stop y después dock', async () => {
+  const { robot, c } = await setup({ fake: { dockDelayMs: 20 } });
+  await until(() => c.connected && c.state.batPct);
+  c.command('start');
+  await until(() => c.state.cleanMissionStatus.phase === 'run');
+  c.command('dock');
+  c.command('dock');                                   // repetir no duplica el dock pendiente
+  await until(() => c.state.cleanMissionStatus.phase === 'charge');
+  assert.deepEqual(robot.published.map((p) => p.body.command), ['start', 'stop', 'stop', 'dock']);
+  c.command('dock');                                   // fuera de run: dock directo
+  await tick();
+  assert.equal(robot.published.at(-1).body.command, 'dock');
+  c.stop();
+});
+
+test('base mientras limpia: si el robot no sale de run, envía dock igualmente al acabar la espera', async () => {
+  const { robot, c } = await setup({ core: { dockWaitMs: 60 } });
+  await until(() => c.connected && c.state.batPct);
+  robot.startBy('manual');
+  await until(() => c.state.cleanMissionStatus.phase === 'run');
+  robot.ignore.add('stop');                            // stop perdido: el robot sigue en run
+  c.command('dock');
+  await until(() => robot.published.some((p) => p.body.command === 'dock'));
+  assert.deepEqual(robot.published.map((p) => p.body.command), ['stop', 'dock']);
+  assert.equal(c.state.cleanMissionStatus.phase, 'run', 'el simulado, como el real, ignora dock en run');
+  c.stop();
+});
