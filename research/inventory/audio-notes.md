@@ -67,3 +67,13 @@ Análisis estático (Ghidra 12.1.4 sobre `libcore_base.so`, jadx) y cuatro consu
 3. Los paquetes van como despliegues de firmware desde la nube de iRobot, con firma y arranque seguro de producción: un paquete propio sería rechazado salvo que se rompiera la verificación del firmware, algo fuera del alcance del proyecto.
 4. El catálogo oficial está vacío: la captura con proxy que quedaba pendiente no aportaría ningún paquete; **se descarta**.
 5. Lo que sí se puede: cambiar entre los 5 idiomas de fábrica (`{"langs2":{"sLang":"xx-XX"}}`, ajuste visible: avisar antes) y dar **voz en LibreRoomba** (avisos hablados desde el navegador o un altavoz de la casa a partir de los avisos del servidor).
+
+## 6. Altavoz: ¿sonido propio sin tocar firmware? (2026-10-28, intento con REA)
+REA no pudo analizar los `.so`: en Windows su proveedor Ghidra solo acepta PE (rechaza ELF arm64), Hopper es solo macOS, e IDA/Kuna no están configurados (además REA quería Ghidra 12.1.x y el instalado es 12.2). Para enrutar esto por REA haría falta una máquina Linux o IDA/Kuna. Análisis hecho con el Ghidra 12.1.4 directo y la capa Java (jadx), que es el motor equivalente.
+
+**Catálogo completo de lo que el robot acepta, revisado entero:**
+- `CommandId` (ajustes/consultas vía shadow): 73 comandos (`SetName`, `SetSuctionLevel`, `StartOnDemandOta`, `GetNotifications`…). **Ninguno de audio.**
+- Topic `cmd` (operativos): plantilla única `{ "command":"%s", "time":%d, "initiator":... }` y la variante `clean` con regiones. El `%s` es uno de los verbos operativos (start/stop/pause/resume/dock/find/evac/quick/spot/train). **Ninguno lleva carga de audio.** El único que suena es `find` (localizar), y reproduce un **sonido fijo del firmware, sin parámetros**: la plantilla no admite datos.
+- Búsqueda exhaustiva de `playSound`/`song`/`tone`/`beep`/`chime`/`melody`/`.wav`/`.mp3`/`.opus`: sin ninguna orden de reproducción (confirma §3).
+
+**Conclusión (cierra también esta vía):** no existe forma de reproducir audio propio por el altavoz sin tocar el firmware. El altavoz lo gobierna la pila de audio interna del robot (Linux); no hay comando local ni en nube que acepte audio arbitrario ni una secuencia de notas (la i-series no expone el viejo Open Interface SONG de las Roomba de 8 bits; corre Linux con otra arquitectura). Las únicas opciones siguen siendo: cambiar entre los idiomas de voz de fábrica, o dar voz desde LibreRoomba (navegador/altavoz de la casa). Audio propio en el robot requeriría firmware, y eso exige la vía física (dificultad ~8-9/10, ver conversación).
