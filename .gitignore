@@ -6,6 +6,7 @@ research/apk-splits/
 research/jadx-out/
 research/jadx-out-4.8.0/
 research/apk-old/
+research/firmware/
 research/native/
 node_modules/
 *.log
