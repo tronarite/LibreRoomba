@@ -5,9 +5,9 @@ const { deepMerge } = require('./robot');
 
 const INITIAL = {
   name: 'Roomba i1+', batPct: 82, softwareVer: 'mock-1.0', mssnM: 0, rssi: -53,
-  bin: { present: true, full: false }, cleanMissionStatus: { phase: 'charge', cycle: 'none', error: 0 },
+  bin: { present: true, full: false }, cleanMissionStatus: { phase: 'charge', cycle: 'none', error: 0, notReady: 0 },
   sku: 'mock-sku', country: 'ES', timezone: 'Europe/Madrid', cloudEnv: 'prod', evacAllowed: true,
-  langs2: { sLang: 'es-ES', dLangs: { langs: ['de-DE', 'en-GB', 'es-ES', 'fr-FR', 'it-IT'] } }, dock: { fwVer: 'mock' },
+  langs2: { sLang: 'es-ES', dLangs: { langs: ['de-DE', 'en-GB', 'es-ES', 'fr-FR', 'it-IT'] } }, dock: { fwVer: 'mock', state: 301 },
   pmaps: [], bbmssn: { nMssn: 0, nMssnOk: 0, nMssnC: 0, nMssnF: 0, aMssnM: 0 }
 };
 const PHASE = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 'hmUsrDock', evac: 'evac' };

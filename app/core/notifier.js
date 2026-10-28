@@ -2,7 +2,7 @@
 // Solo notifica TRANSICIONES entre valores ya vistos: el estado inicial (o el que llega al reconectar sin cambios) no genera avisos.
 // Cada tipo lleva su antirrebote (cooldown) para no repetir el mismo aviso. Los eventos se guardan en memoria (los últimos `max`).
 const EventEmitter = require('events');
-const { describe } = require('./errors');
+const { describe, describeNotReady, describeDock } = require('./errors');
 
 const ACTIVE = new Set(['run', 'hmMidMsn', 'hmPostMsn', 'hmUsrDock']);   // fases en las que hay una misión en curso
 // Antirrebote por tipo (ms); lo no listado usa cooldownMs. Misión terminada/detenida no se repite nunca porque ya depende de una transición.
@@ -53,7 +53,7 @@ class Notifier extends EventEmitter {
   _onState() {
     const s = this.core.state || {};
     const mission = s.cleanMissionStatus || {};
-    const cur = { binFull: s.bin && s.bin.full, phase: mission.phase, cycle: mission.cycle, error: mission.error, bat: s.batPct };
+    const cur = { binFull: s.bin && s.bin.full, phase: mission.phase, cycle: mission.cycle, error: mission.error, bat: s.batPct, notReady: mission.notReady, dock: s.dock && s.dock.state };
     const prev = this._prev;
     const name = this._robotName();
 
@@ -80,6 +80,17 @@ class Notifier extends EventEmitter {
     // Atasco: fase 'stuck' que antes no estaba (si ya hubo un error en el mismo cambio, el aviso de error basta)
     if (cur.phase === 'stuck' && prev.phase !== undefined && prev.phase !== 'stuck' && !reportedError) {
       this._emit('robot-stuck', 'warning', 'Robot atascado', `${name} está atascado y necesita ayuda.`, {});
+    }
+
+    // El robot no puede empezar (notReady pasa a un código distinto de 0): texto del rechazo de la app ("Start-Refuse N")
+    if (Number.isInteger(cur.notReady) && cur.notReady !== 0 && prev.notReady !== undefined && cur.notReady !== prev.notReady) {
+      const d = describeNotReady(cur.notReady, this.lang, { robot: name });
+      this._emit('not-ready', 'warning', d.title, d.message || d.title, { notReady: cur.notReady, code: d.code, name: d.name, known: d.known }, String(cur.notReady));
+    }
+    // Error de la base (dock.state 350-365, p. ej. bolsa llena u obstrucción)
+    if (Number.isInteger(cur.dock) && cur.dock >= 350 && prev.dock !== undefined && cur.dock !== prev.dock) {
+      const d = describeDock(cur.dock, this.lang);
+      this._emit('dock-error', 'warning', `Clean Base: ${d.title}`, d.message || d.title, { code: cur.dock, name: d.name, known: d.known }, String(cur.dock));
     }
 
     // Depósito lleno: false -> true

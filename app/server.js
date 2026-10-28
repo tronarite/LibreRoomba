@@ -13,6 +13,7 @@ const { createFakeCloud } = require('./core/fake-cloud');
 const { normalizeParts } = require('./core/parts');
 const { mergeMissions } = require('./core/mapmerge');
 const { Notifier } = require('./core/notifier');
+const { describe: describeError, describeNotReady, describeDock } = require('./core/errors');
 const dnd = require('./core/dnd');
 const { DndGuard } = require('./core/dnd-guard');
 
@@ -77,6 +78,14 @@ function getPath(object, paths) {
   return undefined;
 }
 
+// { code, title, message } o null (0, sin dato o ya listo)
+function textOf(describeFn, value, state) {
+  if (value === undefined || value === null || value === 0) return null;
+  const d = describeFn(value, 'es', { robot: state.name });
+  if (!d || d.ready) return null;
+  return { code: value, title: d.title, message: d.message || null, error: d.error !== undefined ? d.error : true };
+}
+
 function summary() {
   const state = core.state;
   return {
@@ -87,6 +96,10 @@ function summary() {
     phase: getPath(state, ['cleanMissionStatus.phase']),
     cycle: getPath(state, ['cleanMissionStatus.cycle']),
     error: getPath(state, ['cleanMissionStatus.error', 'error']),
+    // Textos de la app oficial para el error, el motivo por el que no empieza (notReady) y el estado de la base (dock.state)
+    errorText: textOf(describeError, getPath(state, ['cleanMissionStatus.error', 'error']), state),
+    notReady: textOf(describeNotReady, getPath(state, ['cleanMissionStatus.notReady']), state),
+    dock: textOf(describeDock, getPath(state, ['dock.state']), state),
     bin: { present: getPath(state, ['bin.present']), full: getPath(state, ['bin.full']) },
     name: getPath(state, ['name']),
     softwareVer: getPath(state, ['softwareVer']),

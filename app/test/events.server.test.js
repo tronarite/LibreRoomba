@@ -63,5 +63,9 @@ test('/api/dnd: guarda franjas, devuelve conflictos y rechaza datos no válidos 
   const sched = await post(`${s.url}/api/schedule`, { items: [{ enabled: true, start: { day: [1], hour: 10, min: 0 } }] });
   assert.equal(sched.status, 200);
   assert.deepEqual((await sched.json()).warnings, [{ schedule: 0, dnd: 0, day: 1 }]);
-  assert.ok('dnd' in await (await fetch(`${s.url}/api/state`)).json(), 'el resumen incluye el estado de No molestar');
+  const summary = await (await fetch(`${s.url}/api/state`)).json();
+  assert.ok('dnd' in summary, 'el resumen incluye el estado de No molestar');
+  assert.equal(summary.notReady, null, 'robot listo');
+  assert.deepEqual(summary.dock, { code: 301, title: 'Base lista', message: null, error: false });
+  assert.equal(summary.errorText, null);
 });

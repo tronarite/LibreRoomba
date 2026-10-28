@@ -187,3 +187,28 @@ test('list(): más reciente primero y máximo 50 en memoria', async () => {
   assert.equal(list[0].id, seen.at(-1).id);
   c.stop(); n.stop();
 });
+
+test('no puede empezar (notReady) y errores de la base avisan una vez por transición, con el texto de la app', async () => {
+  const { robot, seen, c, n } = await setup({ fake: { state: { cleanMissionStatus: { notReady: 0 }, dock: { state: 301 } } } });
+  robot.report({ cleanMissionStatus: { notReady: 16 } });
+  await until(() => types(seen).includes('not-ready'));
+  const notReady = seen.find((e) => e.type === 'not-ready');
+  assert.equal(notReady.data.code, 216);
+  assert.equal(notReady.severity, 'warning');
+  robot.report({ batPct: 81 }); await tick(20);
+  assert.equal(types(seen).filter((t) => t === 'not-ready').length, 1, 'sin cambio no repite');
+  robot.report({ dock: { state: 302 } }); await tick(20);
+  assert.ok(!types(seen).includes('dock-error'), 'vaciar no es un error');
+  robot.report({ dock: { state: 353 } });
+  await until(() => types(seen).includes('dock-error'));
+  const dock = seen.find((e) => e.type === 'dock-error');
+  assert.equal(dock.data.code, 353);
+  assert.match(dock.title, /^Clean Base: /);
+  c.stop(); n.stop();
+});
+
+test('estado inicial con notReady o error de la base: no avisa', async () => {
+  const { seen, c, n } = await setup({ fake: { state: { cleanMissionStatus: { notReady: 7 }, dock: { state: 351 } } } });
+  assert.deepEqual(types(seen), []);
+  c.stop(); n.stop();
+});

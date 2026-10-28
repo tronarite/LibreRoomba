@@ -1,5 +1,5 @@
 {
- "generatedFrom": "iRobot Home 7.18.0 (RobotErrorCode, RobotStatusResolver, strings.xml en/es-ES)",
+ "generatedFrom": "iRobot Home 7.18.0 (RobotErrorCode, RobotStatusResolver, DockState, strings.xml en/es-ES)",
  "count": 161,
  "errors": {
   "1": {
@@ -1717,18 +1717,18 @@
    "name": "STARTING_ERROR_CLIFF",
    "evidence": {
     "resolver": "history_start_refuse_1",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_1",
+    "push": "push_notification_start_refuse_1"
    },
    "en": {
     "title": "{robot} cannot start a cleaning job while detecting a cliff.",
-    "message": null,
-    "push": null
+    "message": "Move {robot} to a new location.",
+    "push": "{robot} is stuck."
    },
    "es": {
     "title": "{robot} no puede iniciar un trabajo de limpieza si detecta un desnivel.",
-    "message": null,
-    "push": null
+    "message": "Mueve a {robot} a una nueva ubicación.",
+    "push": "{robot} está atascado."
    }
   },
   "202": {
@@ -1736,18 +1736,18 @@
    "name": "STARTING_ERROR_WHEEL_DROP_BOTH",
    "evidence": {
     "resolver": "history_start_refuse_2",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_2",
+    "push": "push_notification_start_refuse_2"
    },
    "en": {
     "title": "Both wheels off floor",
-    "message": null,
-    "push": null
+    "message": "Place {robot} on a flat surface.",
+    "push": "{robot} is stuck."
    },
    "es": {
     "title": "Ambas ruedas separadas del suelo",
-    "message": null,
-    "push": null
+    "message": "Coloca a {robot} sobre una superficie plana.",
+    "push": "{robot} está atascado."
    }
   },
   "203": {
@@ -1755,18 +1755,18 @@
    "name": "STARTING_ERROR_WHEEL_DROP_LEFT",
    "evidence": {
     "resolver": "history_start_refuse_3",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_3",
+    "push": "push_notification_start_refuse_3"
    },
    "en": {
     "title": "Left wheel off floor",
-    "message": null,
-    "push": null
+    "message": "Place {robot} on a flat surface.",
+    "push": "{robot} is stuck."
    },
    "es": {
     "title": "Rueda izquierda separada del suelo",
-    "message": null,
-    "push": null
+    "message": "Coloca a {robot} sobre una superficie plana.",
+    "push": "{robot} está atascado."
    }
   },
   "204": {
@@ -1774,18 +1774,18 @@
    "name": "STARTING_ERROR_WHEEL_DROP_RIGHT",
    "evidence": {
     "resolver": "history_start_refuse_4",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_4",
+    "push": "push_notification_start_refuse_4"
    },
    "en": {
     "title": "Right wheel off floor",
-    "message": null,
-    "push": null
+    "message": "Place {robot} on a flat surface.",
+    "push": "{robot} is stuck."
    },
    "es": {
     "title": "Rueda derecha separada del suelo",
-    "message": null,
-    "push": null
+    "message": "Coloca a {robot} sobre una superficie plana.",
+    "push": "{robot} está atascado."
    }
   },
   "206": {
@@ -1793,18 +1793,18 @@
    "name": "STARTING_ERROR_BRUSH_STALL",
    "evidence": {
     "resolver": "history_start_refuse_6_extractors",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_6",
+    "push": "push_notification_start_refuse_6_extractors"
    },
    "en": {
     "title": "{robot}'s debris extractors were stuck.",
-    "message": null,
-    "push": null
+    "message": "Clear {robot}'s debris extractors.",
+    "push": "Clear {robot}'s debris extractors."
    },
    "es": {
     "title": "Los extractores de suciedad de {robot} estaban atascados.",
-    "message": null,
-    "push": null
+    "message": "Limpia los extractores de residuos de {robot}.",
+    "push": "Limpiar los extractores de desechos de {robot}."
    }
   },
   "207": {
@@ -1812,18 +1812,18 @@
    "name": "STARTING_ERROR_NO_BIN",
    "evidence": {
     "resolver": "history_start_refuse_7",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_7",
+    "push": "push_notification_start_refuse_7"
    },
    "en": {
     "title": "{robot}'s bin was missing.",
-    "message": null,
-    "push": null
+    "message": "Re-install {robot}'s bin.",
+    "push": "{robot}'s bin is missing."
    },
    "es": {
     "title": "Faltaba el depósito de {robot}.",
-    "message": null,
-    "push": null
+    "message": "Vuelva a instalar el depósito de {robot}.",
+    "push": "Falta el depósito de {robot}."
    }
   },
   "208": {
@@ -1831,18 +1831,18 @@
    "name": "STARTING_ERROR_NAV_CRASH",
    "evidence": {
     "resolver": "history_start_refuse_8",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_8",
+    "push": "push_notification_start_refuse_8"
    },
    "en": {
     "title": "{robot} needs to be rebooted.",
-    "message": null,
-    "push": null
+    "message": "{robot} had an error. Press try again.",
+    "push": "{robot} has an error."
    },
    "es": {
     "title": "{robot} debe reiniciarse.",
-    "message": null,
-    "push": null
+    "message": "{robot} tenía un error. Pulsa volver a intentarlo.",
+    "push": "{robot} tiene un error."
    }
   },
   "209": {
@@ -1850,18 +1850,18 @@
    "name": "STARTING_ERROR_MISCONFIGURED",
    "evidence": {
     "resolver": "history_start_refuse_9",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_9",
+    "push": "push_notification_start_refuse_9"
    },
    "en": {
     "title": "{robot}'s software was being updated.",
-    "message": null,
-    "push": null
+    "message": "{robot}'s software is updating. Cleaning will be available in a moment.",
+    "push": "{robot} has an error."
    },
    "es": {
     "title": "Se estaba actualizando el software de {robot}.",
-    "message": null,
-    "push": null
+    "message": "El software de {robot} se está actualizando. La limpieza estará disponible en un momento.",
+    "push": "{robot} tiene un error."
    }
   },
   "210": {
@@ -1869,18 +1869,18 @@
    "name": "STARTING_ERROR_IN_RCON",
    "evidence": {
     "resolver": "history_start_refuse_10",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_10",
+    "push": "push_notification_start_refuse_10"
    },
    "en": {
     "title": "{robot} cannot start while near a Virtual Wall.",
-    "message": null,
-    "push": null
+    "message": "Start {robot} in a new location.",
+    "push": "Please move {robot} then press CLEAN to restart."
    },
    "es": {
     "title": "{robot} no se puede iniciar cerca de una Virtual Wall.",
-    "message": null,
-    "push": null
+    "message": "Inicie a {robot} en otro lugar.",
+    "push": "Mueva {robot} y después pulse CLEAN para reiniciarlo."
    }
   },
   "211": {
@@ -1907,18 +1907,18 @@
    "name": "STARTING_ERROR_INVALID_COMMAND",
    "evidence": {
     "resolver": "history_start_refuse_14",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_14",
+    "push": "push_notification_start_refuse_14"
    },
    "en": {
     "title": "{robot} was not ready for that request.",
-    "message": null,
-    "push": null
+    "message": "{robot} has an error.",
+    "push": "{robot} has an error."
    },
    "es": {
     "title": "{robot} no estaba listo para la solicitud.",
-    "message": null,
-    "push": null
+    "message": "{robot} tiene un error.",
+    "push": "{robot} tiene un error."
    }
   },
   "215": {
@@ -1926,18 +1926,18 @@
    "name": "STARTING_ERROR_INSUFFICIENT_CHARGE",
    "evidence": {
     "resolver": "history_start_refuse_15",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_15",
+    "push": "push_notification_start_refuse_15"
    },
    "en": {
     "title": "Low battery",
-    "message": null,
-    "push": null
+    "message": "{robot}'s battery is too low to start.",
+    "push": "{robot}'s battery is too low to start."
    },
    "es": {
     "title": "Batería baja",
-    "message": null,
-    "push": null
+    "message": "La batería de {robot} está demasiado baja para empezar.",
+    "push": "La carga de la batería del {robot} es demasiado baja para comenzar a limpiar."
    }
   },
   "216": {
@@ -1945,18 +1945,18 @@
    "name": "STARTING_ERROR_BIN_FULL",
    "evidence": {
     "resolver": "history_start_refuse_16",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_16",
+    "push": "push_notification_start_refuse_16"
    },
    "en": {
     "title": "Bin full",
-    "message": null,
-    "push": null
+    "message": "Dust bin may be full. Please empty the bin and clean its sensor to maintain optimal performance.",
+    "push": "{robot}'s bin is full."
    },
    "es": {
     "title": "Depósito lleno",
-    "message": null,
-    "push": null
+    "message": "Es posible que el depósito esté lleno. Vacía el depósito y limpia el sensor para mantener un rendimiento óptimo.",
+    "push": "El depósito de {robot} está lleno."
    }
   },
   "217": {
@@ -1964,18 +1964,18 @@
    "name": "STARTING_ERROR_NAV_COMMS_DOWN",
    "evidence": {
     "resolver": "history_start_refuse_17",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_17",
+    "push": "push_notification_start_refuse_17"
    },
    "en": {
     "title": "Navigation problem",
-    "message": null,
-    "push": null
+    "message": "{robot} encountered an error when starting. Please try again.",
+    "push": "{robot} has an error."
    },
    "es": {
     "title": "Problema de navegación",
-    "message": null,
-    "push": null
+    "message": "{robot} ha detectado un error al iniciarse. Inténtalo de nuevo.",
+    "push": "{robot} tiene un error."
    }
   },
   "218": {
@@ -1983,18 +1983,18 @@
    "name": "STARTING_ERROR_IN_CLOUD_UPGRADE",
    "evidence": {
     "resolver": "history_start_refuse_18",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_18",
+    "push": "push_notification_start_refuse_18"
    },
    "en": {
     "title": "Software upgrade",
-    "message": null,
-    "push": null
+    "message": "{robot}'s software is updating. Cleaning will be available in a moment.",
+    "push": "{robot} has an error."
    },
    "es": {
     "title": "Mejora del software",
-    "message": null,
-    "push": null
+    "message": "El software de {robot} se está actualizando. La limpieza estará disponible en un momento.",
+    "push": "{robot} tiene un error."
    }
   },
   "219": {
@@ -2002,17 +2002,17 @@
    "name": "STARTING_ERROR_CHARGING_SLEEP",
    "evidence": {
     "resolver": "history_start_refuse_19",
-    "notification": null,
+    "notification": "notification_start_refuse_19",
     "push": null
    },
    "en": {
     "title": "Charging error",
-    "message": null,
+    "message": "Start Refuse Error 19 - Charging-Sleep.",
     "push": null
    },
    "es": {
     "title": "Error de carga",
-    "message": null,
+    "message": "Error de inicio rechazado 19 - Cargando en modo de descanso.",
     "push": null
    }
   },
@@ -2021,17 +2021,17 @@
    "name": "STARTING_ERROR_TROUBLE_STARTING_21",
    "evidence": {
     "resolver": "history_start_refuse_21",
-    "notification": null,
+    "notification": "notification_start_refuse_21",
     "push": null
    },
    "en": {
     "title": "Reboot required",
-    "message": null,
+    "message": "{robot} is having trouble starting. Please reboot {robot} and try again.",
     "push": null
    },
    "es": {
     "title": "Es necesario reiniciar",
-    "message": null,
+    "message": "{robot} tiene problemas para ponerse en marcha. Reinicie {robot} e inténtelo de nuevo.",
     "push": null
    }
   },
@@ -2040,17 +2040,17 @@
    "name": "STARTING_ERROR_SAFETY_ONLINE",
    "evidence": {
     "resolver": "history_start_refuse_22",
-    "notification": null,
+    "notification": "notification_start_refuse_22",
     "push": null
    },
    "en": {
     "title": "Navigation problem",
-    "message": null,
+    "message": "Start Refuse Error 22 - Gyro.",
     "push": null
    },
    "es": {
     "title": "Problema de navegación",
-    "message": null,
+    "message": "Falta el paño de {robot}.",
     "push": null
    }
   },
@@ -2059,17 +2059,17 @@
    "name": "STARTING_ERROR_BATTERY_AUTH_ERROR",
    "evidence": {
     "resolver": "history_start_refuse_23",
-    "notification": null,
+    "notification": "notification_start_refuse_23",
     "push": null
    },
    "en": {
     "title": "Battery issue",
-    "message": null,
+    "message": "{robot}'s battery is not detected.",
     "push": null
    },
    "es": {
     "title": "Problema de batería",
-    "message": null,
+    "message": "No se detecta la batería de {robot}.",
     "push": null
    }
   },
@@ -2078,17 +2078,17 @@
    "name": "STARTING_ERROR_MAP_VERSION_MISMATCH",
    "evidence": {
     "resolver": "history_start_refuse_24",
-    "notification": null,
+    "notification": "notification_start_refuse_24",
     "push": null
    },
    "en": {
     "title": "Smart Map problem",
-    "message": null,
+    "message": "Start Refuse Error 24 - Map Version Mismatch.",
     "push": null
    },
    "es": {
     "title": "Problema con el mapa inteligente",
-    "message": null,
+    "message": "Error de inicio rechazado 24 - Incompatibilidad de versión de mapa.",
     "push": null
    }
   },
@@ -2097,17 +2097,17 @@
    "name": "STARTING_ERROR_TROUBLE_STARTING_25",
    "evidence": {
     "resolver": "history_start_refuse_25",
-    "notification": null,
+    "notification": "notification_start_refuse_25",
     "push": null
    },
    "en": {
     "title": "Reboot required",
-    "message": null,
+    "message": "{robot} is having trouble starting. Please reboot {robot} and try again.",
     "push": null
    },
    "es": {
     "title": "Es necesario reiniciar",
-    "message": null,
+    "message": "{robot} tiene problemas para ponerse en marcha. Reinicie {robot} e inténtelo de nuevo.",
     "push": null
    }
   },
@@ -2116,17 +2116,17 @@
    "name": "STARTING_ERROR_TROUBLE_STARTING_26",
    "evidence": {
     "resolver": "history_start_refuse_26",
-    "notification": null,
+    "notification": "notification_start_refuse_26",
     "push": null
    },
    "en": {
     "title": "Reboot required",
-    "message": null,
+    "message": "{robot} is having trouble starting. Please reboot {robot} and try again.",
     "push": null
    },
    "es": {
     "title": "Es necesario reiniciar",
-    "message": null,
+    "message": "{robot} tiene problemas para ponerse en marcha. Reinicie {robot} e inténtelo de nuevo.",
     "push": null
    }
   },
@@ -2135,17 +2135,17 @@
    "name": "STARTING_ERROR_TROUBLE_STARTING_27",
    "evidence": {
     "resolver": "history_start_refuse_27",
-    "notification": null,
+    "notification": "notification_start_refuse_27",
     "push": null
    },
    "en": {
     "title": "Reboot required",
-    "message": null,
+    "message": "{robot} is having trouble starting. Please reboot {robot} and try again.",
     "push": null
    },
    "es": {
     "title": "Es necesario reiniciar",
-    "message": null,
+    "message": "{robot} tiene problemas para ponerse en marcha. Reinicie {robot} e inténtelo de nuevo.",
     "push": null
    }
   },
@@ -2154,17 +2154,17 @@
    "name": "STARTING_ERROR_TROUBLE_STARTING_28",
    "evidence": {
     "resolver": "history_start_refuse_28",
-    "notification": null,
+    "notification": "notification_start_refuse_28",
     "push": null
    },
    "en": {
     "title": "Reboot required",
-    "message": null,
+    "message": "{robot} is having trouble starting. Please reboot {robot} and try again.",
     "push": null
    },
    "es": {
     "title": "Es necesario reiniciar",
-    "message": null,
+    "message": "{robot} tiene problemas para ponerse en marcha. Reinicie {robot} e inténtelo de nuevo.",
     "push": null
    }
   },
@@ -2173,17 +2173,17 @@
    "name": "STARTING_ERROR_TANK_LOW",
    "evidence": {
     "resolver": "history_start_refuse_31",
-    "notification": null,
+    "notification": "notification_start_refuse_31",
     "push": null
    },
    "en": {
     "title": "Tank low",
-    "message": null,
+    "message": "Please fill the tank completely before starting your next job.",
     "push": null
    },
    "es": {
     "title": "Tanque casi vacío",
-    "message": null,
+    "message": "Llena el depósito por completo antes de comenzar el siguiente trabajo.",
     "push": null
    }
   },
@@ -2192,17 +2192,17 @@
    "name": "STARTING_ERROR_BUMPED",
    "evidence": {
     "resolver": "history_start_refuse_32",
-    "notification": null,
+    "notification": "notification_start_refuse_32",
     "push": null
    },
    "en": {
     "title": "Lid open",
-    "message": null,
+    "message": "Close the lid.",
     "push": null
    },
    "es": {
     "title": "Tapa abierta",
-    "message": null,
+    "message": "Cierre la tapa.",
     "push": null
    }
   },
@@ -2211,17 +2211,17 @@
    "name": "STARTING_ERROR_TROUBLE_STARTING_33",
    "evidence": {
     "resolver": "history_start_refuse_33",
-    "notification": null,
+    "notification": "notification_start_refuse_33",
     "push": null
    },
    "en": {
     "title": "Bumper stuck",
-    "message": null,
+    "message": "{robot} is having trouble starting. Please tap the bumper to unstick.",
     "push": null
    },
    "es": {
     "title": "Parachoques atascado",
-    "message": null,
+    "message": "{robot} tiene problemas para ponerse en marcha. Dé unos cuantos golpecitos en el parachoques para despegarlo.",
     "push": null
    }
   },
@@ -2230,17 +2230,17 @@
    "name": "STARTING_ERROR_INVALID_PAD",
    "evidence": {
     "resolver": "history_start_refuse_34",
-    "notification": null,
+    "notification": "notification_start_refuse_34",
     "push": null
    },
    "en": {
     "title": "Unrecognized cleaning pad",
-    "message": null,
+    "message": "Attach a pad.",
     "push": null
    },
    "es": {
     "title": "Paño de limpieza no reconocido",
-    "message": null,
+    "message": "Coloque un paño.",
     "push": null
    }
   },
@@ -2249,17 +2249,17 @@
    "name": "STARTING_ERROR_PAD_DETECTION_TIMEOUT",
    "evidence": {
     "resolver": "history_start_refuse_35",
-    "notification": null,
+    "notification": "notification_start_refuse_35",
     "push": null
    },
    "en": {
     "title": "Unrecognized cleaning pad",
-    "message": null,
+    "message": "Attach a pad.",
     "push": null
    },
    "es": {
     "title": "Paño de limpieza no reconocido",
-    "message": null,
+    "message": "Coloque un paño.",
     "push": null
    }
   },
@@ -2268,17 +2268,17 @@
    "name": "STARTING_ERROR_UNABLE_EMPTY_BIN_CHECK_IF_CLOGGED",
    "evidence": {
     "resolver": "history_start_refuse_36",
-    "notification": null,
+    "notification": "notification_start_refuse_36",
     "push": null
    },
    "en": {
     "title": "Unable to empty bin: clog",
-    "message": null,
+    "message": "Unable to empty bin. Check for clogs",
     "push": null
    },
    "es": {
     "title": "No se ha podido vaciar el depósito: obstrucción",
-    "message": null,
+    "message": "No se ha podido vaciar el depósito. Comprobar si hay obstrucciones",
     "push": null
    }
   },
@@ -2287,17 +2287,17 @@
    "name": "STARTING_ERROR_SM_BUS_PERMANENT_FAILURE",
    "evidence": {
     "resolver": "history_start_refuse_37",
-    "notification": null,
+    "notification": "notification_start_refuse_37",
     "push": null
    },
    "en": {
     "title": "Battery issue",
-    "message": null,
+    "message": "{robot}'s battery is not detected.",
     "push": null
    },
    "es": {
     "title": "Problema de batería",
-    "message": null,
+    "message": "No se detecta la batería de {robot}.",
     "push": null
    }
   },
@@ -2306,17 +2306,17 @@
    "name": "STARTING_ERROR_CHARGE_TIMEOUT",
    "evidence": {
     "resolver": "history_start_refuse_38",
-    "notification": null,
+    "notification": "notification_start_refuse_38",
     "push": null
    },
    "en": {
     "title": "Battery issue",
-    "message": null,
+    "message": "{robot}'s battery is not detected.",
     "push": null
    },
    "es": {
     "title": "Problema de batería",
-    "message": null,
+    "message": "No se detecta la batería de {robot}.",
     "push": null
    }
   },
@@ -2325,17 +2325,17 @@
    "name": "STARTING_ERROR_SAVING_MAP",
    "evidence": {
     "resolver": "history_start_refuse_39",
-    "notification": null,
+    "notification": "notification_start_refuse_39",
     "push": null
    },
    "en": {
     "title": "Clean Map problem",
-    "message": null,
+    "message": "Saving Clean Map. Cleaning available shortly.",
     "push": null
    },
    "es": {
     "title": "Problema con el Mapa de Limpieza",
-    "message": null,
+    "message": "Guardar Mapa de limpieza. Limpieza pronto disponible.",
     "push": null
    }
   },
@@ -2344,17 +2344,17 @@
    "name": "STARTING_ERROR_NEW_CLEANING_HEAD",
    "evidence": {
     "resolver": "history_start_refuse_40",
-    "notification": null,
+    "notification": "notification_start_refuse_40",
     "push": null
    },
    "en": {
     "title": "Software update required",
-    "message": null,
+    "message": "New cleaning head detected. Please update {robot}'s software.",
     "push": null
    },
    "es": {
     "title": "Es necesaria una actualización de software",
-    "message": null,
+    "message": "Se ha detectado un nuevo cabezal de limpieza. Actualice el software de {robot}.",
     "push": null
    }
   },
@@ -2363,17 +2363,17 @@
    "name": "STARTING_ERROR_DEAD_CAMERA",
    "evidence": {
     "resolver": "history_start_refuse_51",
-    "notification": null,
+    "notification": "notification_start_refuse_51",
     "push": null
    },
    "en": {
     "title": "Hardware problem detected",
-    "message": null,
+    "message": "{robot} can’t navigate because of a camera issue. To clear error, press and hold clean button for 10 seconds. (Error 68)",
     "push": null
    },
    "es": {
     "title": "Se ha detectado un problema de hardware",
-    "message": null,
+    "message": "{robot} no puede desplazarse debido a un problema con la cámara. Para resolver el error, mantén pulsado el botón CLEAN durante 10 segundos. (Error 68)",
     "push": null
    }
   },
@@ -2382,17 +2382,17 @@
    "name": "STARTING_ERROR_WEATHER",
    "evidence": {
     "resolver": "history_start_refuse_52",
-    "notification": null,
+    "notification": "notification_start_refuse_52",
     "push": null
    },
    "en": {
     "title": "Cancelled due to rain in the forecast.",
-    "message": null,
+    "message": "{robot} has an error.",
     "push": null
    },
    "es": {
     "title": "Se ha cancelado el trabajo debido al pronóstico de lluvia.",
-    "message": null,
+    "message": "{robot} tiene un error.",
     "push": null
    }
   },
@@ -2401,17 +2401,17 @@
    "name": "STARTING_ERROR_SAFETY_FAULT_DRIVE_STALL_LEFT",
    "evidence": {
     "resolver": "history_start_refuse_53",
-    "notification": null,
+    "notification": "notification_start_refuse_53",
     "push": null
    },
    "en": {
     "title": "Left wheel error",
-    "message": null,
+    "message": "Left wheel has an error. Clear the wheel then press the START button to resume the mowing job.",
     "push": null
    },
    "es": {
     "title": "Error en rueda izquierda",
-    "message": null,
+    "message": "La rueda izquierda tiene un error. Despeja la rueda y luego presiona el botón START (inicio) para reanudar el trabajo de corte.",
     "push": null
    }
   },
@@ -2420,17 +2420,17 @@
    "name": "STARTING_ERROR_SAFETY_FAULT_DRIVE_STALL_RIGHT",
    "evidence": {
     "resolver": "history_start_refuse_54",
-    "notification": null,
+    "notification": "notification_start_refuse_54",
     "push": null
    },
    "en": {
     "title": "Right wheel error",
-    "message": null,
+    "message": "Right wheel has an error. Clear the wheel then press the START button to resume the mowing job.",
     "push": null
    },
    "es": {
     "title": "Error en rueda derecha",
-    "message": null,
+    "message": "La rueda derecha tiene un error. Despeja la rueda y luego presiona el botón START (inicio) para reanudar el trabajo de corte.",
     "push": null
    }
   },
@@ -2439,17 +2439,17 @@
    "name": "STARTING_ERROR_NOT_DOCKED",
    "evidence": {
     "resolver": "history_start_refuse_55",
-    "notification": null,
+    "notification": "notification_start_refuse_55",
     "push": null
    },
    "en": {
     "title": "Not on charging station",
-    "message": null,
+    "message": "Place Terra on the charging station to mow.",
     "push": null
    },
    "es": {
     "title": "No está en la base de carga",
-    "message": null,
+    "message": "Pon a Terra en la estación de carga para cortar el césped.",
     "push": null
    }
   },
@@ -2458,18 +2458,18 @@
    "name": "STARTING_ERROR_BACKUP_REFUSED",
    "evidence": {
     "resolver": "history_start_refuse_57",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_57",
+    "push": "push_notification_start_refuse_57"
    },
    "en": {
     "title": "Navigation problem",
-    "message": null,
-    "push": null
+    "message": "Move {robot} to a nearby location then press Resume or CLEAN on the robot to continue.",
+    "push": "{robot} is stuck and needs assistance. Please move {robot} to a new area."
    },
    "es": {
     "title": "Problema de navegación",
-    "message": null,
-    "push": null
+    "message": "Mueve {robot} a una ubicación cercana y pulsa Reanudar o CLEAN en el robot para continuar.",
+    "push": "$s está atascado/ a y necesita ayuda. Mueve a $s a una nueva ubicación"
    }
   },
   "258": {
@@ -2477,17 +2477,17 @@
    "name": "STARTING_ERROR_BRIDGE_NOT_CONFINED",
    "evidence": {
     "resolver": "history_start_refuse_58",
-    "notification": null,
+    "notification": "notification_start_refuse_58",
     "push": null
    },
    "en": {
     "title": "Workspace path error: Retrain {robot}",
-    "message": null,
+    "message": "{robot} is having trouble with the path to its workspace and needs to be retrained.",
     "push": null
    },
    "es": {
     "title": "Error de ruta del espacio de trabajo: Volver a intentar {robot}",
-    "message": null,
+    "message": "{robot} está teniendo problemas con la ruta a su espacio de trabajo y necesita ser configurado nuevamente.",
     "push": null
    }
   },
@@ -2496,17 +2496,17 @@
    "name": "STARTING_ERROR_BRIDGE_DOES_NOT_REACH_DOCK",
    "evidence": {
     "resolver": "history_start_refuse_59",
-    "notification": null,
+    "notification": "notification_start_refuse_59",
     "push": null
    },
    "en": {
     "title": "Workspace path error: Retrain {robot}",
-    "message": null,
+    "message": "{robot} is having trouble with the path to its charging station and needs to be retrained.",
     "push": null
    },
    "es": {
     "title": "Error de ruta del espacio de trabajo: Volver a intentar {robot}",
-    "message": null,
+    "message": "{robot} está teniendo problemas con la ruta a su estación de carga y necesita ser configurado nuevamente.",
     "push": null
    }
   },
@@ -2515,17 +2515,17 @@
    "name": "STARTING_ERROR_BRIDGE_DOES_NOT_REACH_YARD",
    "evidence": {
     "resolver": "history_start_refuse_60",
-    "notification": null,
+    "notification": "notification_start_refuse_60",
     "push": null
    },
    "en": {
     "title": "Workspace path error: Retrain {robot}",
-    "message": null,
+    "message": "{robot} is having trouble with the path to its workspace and needs to be retrained.",
     "push": null
    },
    "es": {
     "title": "Error de ruta del espacio de trabajo: Volver a intentar {robot}",
-    "message": null,
+    "message": "{robot} está teniendo problemas con la ruta a su espacio de trabajo y necesita ser configurado nuevamente.",
     "push": null
    }
   },
@@ -2534,17 +2534,17 @@
    "name": "STARTING_ERROR_WHEEL_MOTOR_OVERTEMP",
    "evidence": {
     "resolver": "history_start_refuse_61",
-    "notification": null,
+    "notification": "notification_start_refuse_61",
     "push": null
    },
    "en": {
     "title": "Wheel motor over temp",
-    "message": null,
+    "message": "Wheel motor is overheating. Allow motor to cool and press START to resume.",
     "push": null
    },
    "es": {
     "title": "Sobrecalentamiento del motor de la rueda",
-    "message": null,
+    "message": "El motor de la rueda se está sobrecalentando. Deja que el motor se enfríe y presiona START (inicio) para reanudar.",
     "push": null
    }
   },
@@ -2553,18 +2553,18 @@
    "name": "STARTING_ERROR_WHEEL_MOTOR_UNDERTEMP",
    "evidence": {
     "resolver": "history_start_refuse_62",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_62",
+    "push": "push_notification_start_refuse_62"
    },
    "en": {
     "title": "Wheel motor under temp",
-    "message": null,
-    "push": null
+    "message": "Wheel motor is too cold to resume. Try scheduling a mowing job for a warmer day.",
+    "push": "{robot} paused its mowing job because the wheel motor is too cold. See the app for help."
    },
    "es": {
     "title": "Infracalentamiento del motor de la rueda",
-    "message": null,
-    "push": null
+    "message": "El motor de la rueda está demasiado frío para reanudar. Intenta programar un trabajo de corte para un día más cálido.",
+    "push": "{robot} ha parado de cortar el césped porque el motor de las ruedas está demasiado frío. Consulta la aplicación para obtener ayuda."
    }
   },
   "263": {
@@ -2572,18 +2572,18 @@
    "name": "STARTING_ERROR_BLADE_MOTOR_OVERTEMP",
    "evidence": {
     "resolver": "history_start_refuse_63",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_63",
+    "push": "push_notification_start_refuse_63"
    },
    "en": {
     "title": "Blade motor over temp",
-    "message": null,
-    "push": null
+    "message": "Blade motor is overheating. Adjust the cutting height in the app, and make sure the lawn isn't too wet.",
+    "push": "{robot} paused its mowing job because the blade motor is overheating. See the app for help."
    },
    "es": {
     "title": "Sobrecalentamiento del motor de la cuchilla",
-    "message": null,
-    "push": null
+    "message": "El motor de la cuchilla se está sobrecalentando. Ajusta la altura de corte en la aplicación y asegúrate de que el césped no esté demasiado mojado.",
+    "push": "{robot} ha parado de cortar el césped porque el motor de la cuchilla se está sobrecalentando. Consulta la aplicación para obtener ayuda."
    }
   },
   "264": {
@@ -2591,18 +2591,18 @@
    "name": "STARTING_ERROR_BLADE_MOTOR_UNDERTEMP",
    "evidence": {
     "resolver": "history_start_refuse_64",
-    "notification": null,
-    "push": null
+    "notification": "notification_start_refuse_64",
+    "push": "push_notification_start_refuse_64"
    },
    "en": {
     "title": "Blade motor under temp",
-    "message": null,
-    "push": null
+    "message": "Blade motor is too cold to resume. Try scheduling a mowing job for a warmer day.",
+    "push": "{robot} paused its mowing job because the blade motor is too cold. See the app for help."
    },
    "es": {
     "title": "Infracalentamiento del motor de la cuchilla",
-    "message": null,
-    "push": null
+    "message": "El motor de la cuchilla está demasiado frío para reanudar. Intenta programar un trabajo de corte para un día más cálido.",
+    "push": "{robot} ha parado de cortar el césped porque el motor de la cuchilla está demasiado frío. Consulta la aplicación para obtener ayuda."
    }
   },
   "265": {
@@ -2610,17 +2610,17 @@
    "name": "STARTING_ERROR_FLEET_DISABLED",
    "evidence": {
     "resolver": "history_start_refuse_65",
-    "notification": null,
+    "notification": "notification_start_refuse_65",
     "push": null
    },
    "en": {
     "title": "Software error",
-    "message": null,
+    "message": "{robot} is temporarily disabled.",
     "push": null
    },
    "es": {
     "title": "Error de software",
-    "message": null,
+    "message": "{robot} está temporalmente deshabilitado.",
     "push": null
    }
   },
@@ -2629,17 +2629,17 @@
    "name": "STARTING_ERROR_SUBSCRIPTION_EXPIRED",
    "evidence": {
     "resolver": "history_start_refuse_66",
-    "notification": null,
+    "notification": "notification_start_refuse_66",
     "push": null
    },
    "en": {
     "title": "Cleaning unavailable. Check subscription status.",
-    "message": null,
+    "message": "Check your connection or subscription status and try again.",
     "push": null
    },
    "es": {
     "title": "Limpieza no disponible. Verifica el estado de la suscripción.",
-    "message": null,
+    "message": "Verifica el estado de tu conexión o suscripción y vuelve a intentarlo.",
     "push": null
    }
   },
@@ -2648,17 +2648,17 @@
    "name": "STARTING_ERROR_DEAD_NAVIGATION_BOARD",
    "evidence": {
     "resolver": "history_start_refuse_67",
-    "notification": null,
+    "notification": "notification_start_refuse_67",
     "push": null
    },
    "en": {
     "title": "Hardware problem detected",
-    "message": null,
+    "message": "{robot} can’t navigate because of a camera issue. To clear error, press and hold clean button for 10 seconds. (Error 1003)",
     "push": null
    },
    "es": {
     "title": "Se ha detectado un problema de hardware",
-    "message": null,
+    "message": "{robot} no puede desplazarse debido a un problema con la cámara. Para resolver el error, mantén pulsado el botón CLEAN durante 10 segundos. (Error 1003)",
     "push": null
    }
   },
@@ -2705,17 +2705,17 @@
    "name": "STARTING_ERROR_TANK_LEAKING",
    "evidence": {
     "resolver": "history_start_refuse_72",
-    "notification": null,
+    "notification": "notification_start_refuse_72",
     "push": null
    },
    "en": {
     "title": "Check tank for leaks",
-    "message": null,
+    "message": "Check water tank for leaks. If no leak is seen, fill tank with water. Wait 30 mins to ensure no leak before resuming.",
     "push": null
    },
    "es": {
     "title": "Comprueba si hay fugas en el tanque",
-    "message": null,
+    "message": "Comprueba si hay fugas en el tanque de agua. Si no se observa ninguna fuga, llena el tanque con agua. Espera 30 minutos para asegurarte de que no se produce ninguna fuga antes de reanudar.",
     "push": null
    }
   },
@@ -2724,17 +2724,17 @@
    "name": "STARTING_ERROR_ROBOT_FLUID_LEVEL_SENSOR_BROKEN",
    "evidence": {
     "resolver": "history_start_refuse_73",
-    "notification": null,
+    "notification": "notification_start_refuse_73",
     "push": null
    },
    "en": {
     "title": "Sensor needs attention",
-    "message": null,
+    "message": "Fluid sensor issue. Remove and reinstall bin until you hear a click. Next, press {robot}'s button for 10 seconds to reboot. (Error 1015)",
     "push": null
    },
    "es": {
     "title": "El sensor requiere asistencia",
-    "message": null,
+    "message": "Problema con el sensor de líquido. Retira y vuelve a instalar el depósito hasta que oigas un clic. A continuación, pulsa el botón de {robot} durante 10 segundos para reiniciarlo. (Error 1015)",
     "push": null
    }
   },
@@ -2743,17 +2743,17 @@
    "name": "STARTING_ERROR_TANK_FLUID_LEVEL_SENSOR_BROKEN",
    "evidence": {
     "resolver": "history_start_refuse_74",
-    "notification": null,
+    "notification": "notification_start_refuse_74",
     "push": null
    },
    "en": {
     "title": "Sensor needs attention",
-    "message": null,
+    "message": "Fluid sensor issue. Remove and reinstall bin until you hear a click. Next, press {robot}'s button for 10 seconds to reboot. (Error 1014)",
     "push": null
    },
    "es": {
     "title": "El sensor requiere asistencia",
-    "message": null,
+    "message": "Problema con el sensor de líquido. Retira y vuelve a instalar el depósito hasta que oigas un clic. A continuación, pulsa el botón de {robot} durante 10 segundos para reiniciarlo. (Error 1014)",
     "push": null
    }
   },
@@ -2762,17 +2762,17 @@
    "name": "STARTING_ERROR_CLEANING_HEAD_HW_MISMATCH",
    "evidence": {
     "resolver": "history_start_refuse_78",
-    "notification": null,
+    "notification": "notification_start_refuse_78",
     "push": null
    },
    "en": {
     "title": "Incompatible cleaning head",
-    "message": null,
+    "message": "Don’t worry, there is no damage. Please tap ‘Show me how’ for instructions on replacing and installing this part.",
     "push": null
    },
    "es": {
     "title": "Cabezal de limpieza incompatible",
-    "message": null,
+    "message": "No te preocupes, no hay daños. Toca \"Muéstrame cómo\" para obtener instrucciones sobre cómo sustituir e instalar esta pieza.",
     "push": null
    }
   },
@@ -3059,6 +3059,280 @@
     "title": "La batería del robot está baja. Colóquelo en la Home Base.",
     "message": null,
     "push": null
+   }
+  }
+ },
+ "dock": {
+  "300": {
+   "code": 300,
+   "name": "DOCK_UNKNOWN",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "301": {
+   "code": 301,
+   "name": "DOCK_READY",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "302": {
+   "code": 302,
+   "name": "DOCK_EVACUATION_IN_PROGRESS",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "303": {
+   "code": 303,
+   "name": "DOCK_EVACUATION_COMPLETE",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "304": {
+   "code": 304,
+   "name": "DOCK_EVACUATION_STOPPING",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "305": {
+   "code": 305,
+   "name": "DOCK_EVACUATION_UPGRADING",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "350": {
+   "code": 350,
+   "name": "DOCK_BAG_MISSING",
+   "evidence": {
+    "title": "autoevac_history_failed_error_350",
+    "message": "autoevac_history_complete_error_350"
+   },
+   "en": {
+    "title": "Bag missing",
+    "message": "Unable to empty bin: bag missing"
+   },
+   "es": {
+    "title": "Falta la bolsa",
+    "message": "No se ha podido vaciar el depósito: falta la bolsa"
+   }
+  },
+  "351": {
+   "code": 351,
+   "name": "DOCK_CLOGGED",
+   "evidence": {
+    "title": "autoevac_history_failed_error_351",
+    "message": "autoevac_history_complete_error_351"
+   },
+   "en": {
+    "title": "Clog",
+    "message": "Unable to empty bin: clog"
+   },
+   "es": {
+    "title": "Obstrucción",
+    "message": "No se ha podido vaciar el depósito: obstrucción"
+   }
+  },
+  "352": {
+   "code": 352,
+   "name": "DOCK_VACUUM_INOPERABLE",
+   "evidence": {
+    "title": "autoevac_history_failed_error_352",
+    "message": "autoevac_history_complete_error_352"
+   },
+   "en": {
+    "title": "Sealing problem",
+    "message": "Unable to empty bin: sealing problem"
+   },
+   "es": {
+    "title": "Problema de sellado",
+    "message": "No se ha podido vaciar el depósito: problema de sellado"
+   }
+  },
+  "353": {
+   "code": 353,
+   "name": "DOCK_BAG_FULL",
+   "evidence": {
+    "title": "autoevac_history_failed_error_353",
+    "message": "autoevac_history_complete_error_353"
+   },
+   "en": {
+    "title": "Bag full",
+    "message": "Unable to empty bin: bag full"
+   },
+   "es": {
+    "title": "Bolsa llena",
+    "message": "No se ha podido vaciar el depósito: bolsa llena"
+   }
+  },
+  "354": {
+   "code": 354,
+   "name": "DOCK_MOTOR_FAILURE",
+   "evidence": {
+    "title": "autoevac_history_failed_error_354",
+    "message": "autoevac_history_complete_error_354"
+   },
+   "en": {
+    "title": "Motor problem",
+    "message": "Unable to empty bin: motor problem"
+   },
+   "es": {
+    "title": "Problema con el motor",
+    "message": "No se ha podido vaciar el depósito: problema con el motor"
+   }
+  },
+  "355": {
+   "code": 355,
+   "name": "DOCK_PARTIAL_CLOG",
+   "evidence": {
+    "title": "autoevac_history_failed_error_355",
+    "message": "autoevac_history_complete_error_355"
+   },
+   "en": {
+    "title": "Bag getting full",
+    "message": "Unable to empty bin: bag getting full"
+   },
+   "es": {
+    "title": "La bolsa está casi llena",
+    "message": "No se ha podido vaciar el depósito: la bolsa está casi llena"
+   }
+  },
+  "360": {
+   "code": 360,
+   "name": "DOCK_COMMUNICATION_FAILURE",
+   "evidence": {
+    "title": "autoevac_history_failed_error_360",
+    "message": "autoevac_history_complete_error_360"
+   },
+   "en": {
+    "title": "Communication problem",
+    "message": "Unable to empty bin: communication problem"
+   },
+   "es": {
+    "title": "Problema de comunicación",
+    "message": "No se ha podido vaciar el depósito: problema de comunicación"
+   }
+  },
+  "361": {
+   "code": 361,
+   "name": "DOCK_EVACUATION_REPORT_ERROR",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "362": {
+   "code": 362,
+   "name": "DOCK_LIFETIME_DATA_REPORT_ERROR",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "363": {
+   "code": 363,
+   "name": "DOCK_ALL_REPORTS_ERROR",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
+   }
+  },
+  "365": {
+   "code": 365,
+   "name": "DOCK_HARDWARE_ISSUE_ERROR",
+   "evidence": {
+    "title": null,
+    "message": null
+   },
+   "en": {
+    "title": null,
+    "message": null
+   },
+   "es": {
+    "title": null,
+    "message": null
    }
   }
  }

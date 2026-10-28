@@ -2,6 +2,8 @@ const phases = { charge: 'Cargando', run: 'Limpiando', hmUsrDock: 'Volviendo a l
 const buttons = [...document.querySelectorAll('[data-command]')];
 const PREF_KEYS = ['twoPass', 'binPause', 'openOnly', 'childLock', 'rankOverlap', 'ecoCharge', 'schedHold', 'binTypeDetect', 'name'];
 let current = {};
+// "Título. Mensaje" sin punto doble (algunos títulos de la app ya terminan en punto)
+const sentence = (text) => !text ? '' : !text.message ? text.title : `${/[.!?]$/.test(text.title) ? text.title : `${text.title}.`} ${text.message}`;
 
 function render(data) {
   current = data;
@@ -15,7 +17,10 @@ function render(data) {
   connection.textContent = data.connected ? 'Conectada' : data.authFailed ? 'Contraseña rechazada' : 'Desconectada'; connection.classList.toggle('online', !!data.connected);
   const auth = document.querySelector('#auth'); auth.textContent = data.authFailed ? data.authHelp || 'El robot rechaza la contraseña local.' : ''; auth.classList.toggle('hidden', !data.authFailed);
   const error = document.querySelector('#error'); const hasError = data.error && data.error !== 0;
-  error.textContent = hasError ? `Error del robot: ${data.error}` : ''; error.classList.toggle('hidden', !hasError);
+  error.textContent = hasError ? `Error ${data.error}: ${sentence(data.errorText) || 'sin descripción'}` : ''; error.classList.toggle('hidden', !hasError);
+  // Motivo por el que el robot no puede empezar (notReady) y problemas de la Clean Base, con los textos de la app oficial
+  const notReady = document.querySelector('#not-ready'); notReady.textContent = data.notReady ? `No puede empezar: ${sentence(data.notReady)}` : ''; notReady.classList.toggle('hidden', !data.notReady);
+  const dockError = document.querySelector('#dock-error'); const dockBad = !!data.dock?.error; dockError.textContent = dockBad ? `Clean Base: ${sentence(data.dock)}` : ''; dockError.classList.toggle('hidden', !dockBad);
   document.querySelector('#bin').classList.toggle('hidden', !data.bin?.full);
   const banner = document.querySelector('#dnd-banner'); banner.textContent = data.dnd ? `${data.dnd.label} está activo hasta las ${data.dnd.until}.` : ''; banner.classList.toggle('hidden', !data.dnd);
   for (const key of PREF_KEYS) {
@@ -47,7 +52,7 @@ const setPref = (key, value) => post('/api/pref', { key, value }, 'No se pudo ca
 function renderInfo(data) {
   const info = data.info || {};
   const rows = [['Versión del software', data.softwareVer], ['SKU', info.sku], ['País', info.country], ['Zona horaria', info.timezone], ['Idioma de voz', info.language],
-    ['Idiomas instalados', info.languagesAvailable?.join(', ')], ['Firmware de la base', info.dockFirmware], ['Entorno de nube', info.cloudEnv], ['Vaciado automático', info.evacAllowed === undefined ? undefined : info.evacAllowed ? 'Permitido' : 'No permitido'],
+    ['Idiomas instalados', info.languagesAvailable?.join(', ')], ['Estado de la base', data.dock?.title], ['Firmware de la base', info.dockFirmware], ['Entorno de nube', info.cloudEnv], ['Vaciado automático', info.evacAllowed === undefined ? undefined : info.evacAllowed ? 'Permitido' : 'No permitido'],
     ['Señal Wi‑Fi', Number.isFinite(data.rssi) ? `${data.rssi} dBm` : undefined]];
   const list = document.querySelector('#info-body'); list.replaceChildren();
   for (const [label, value] of rows) {

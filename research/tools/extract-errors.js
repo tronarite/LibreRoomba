@@ -1,6 +1,8 @@
 // Genera app/core/error-table.json a partir del APK ya decompilado (jadx-out + jadx-res). Uso: node research/tools/extract-errors.js
 // Fuentes: RobotErrorCode.java (código numérico -> nombre), RobotStatusResolver.java (código -> recurso history_error_*) y strings.xml (en y es).
 // Para cada código guarda los textos de la app (título, mensaje, aviso push) y qué recursos se encontraron (evidencia). No inventa texto.
+// Los rechazos al empezar (STARTING_ERROR_*, 200 + cleanMissionStatus.notReady, recursos *_start_refuse_N) usan la misma forma.
+// Además genera `dock`: estados de la base (dock.state, constantes de com.irobot.core.DockState) con los textos del vaciado automático.
 const fs = require('fs');
 const path = require('path');
 
@@ -39,12 +41,15 @@ for (const m of resolverSrc.matchAll(/map\.put\(RobotErrorCode\.([A-Z0-9_]+),\s*
   const code = codeOf[m[1]];
   if (code === undefined || code === 0) continue;
   const historyKey = m[2];
-  const suffix = historyKey.replace(/^history_error_/, '');
-  const keys = { history: historyKey, notification: `notification_error_${suffix}`, push: `push_notification_error_${suffix}` };
+  // Familia: history_error_N (errores) o history_start_refuse_N (rechazos al empezar; su número es code - 200)
+  const family = historyKey.startsWith('history_start_refuse_') ? 'start_refuse' : 'error';
+  const suffix = historyKey.replace(/^history_(error|start_refuse)_/, '');
+  const number = family === 'start_refuse' ? code - 200 : code;
+  const keys = { history: historyKey, notification: `notification_${family}_${suffix}`, push: `push_notification_${family}_${suffix}` };
   // El sufijo del recurso history_* puede llevar texto extra (2_extractor): se prueba primero ese y luego el número a secas
-  const find = (prefix) => [`${prefix}${suffix}`, `${prefix}${code}`].find((k) => en[k] !== undefined);
-  keys.notification = find('notification_error_') || keys.notification;
-  keys.push = find('push_notification_error_') || keys.push;
+  const find = (prefix) => [`${prefix}${suffix}`, `${prefix}${number}`].find((k) => en[k] !== undefined);
+  keys.notification = find(`notification_${family}_`) || keys.notification;
+  keys.push = find(`push_notification_${family}_`) || keys.push;
   const pick = (dict, key) => dict[key];
   const entry = { code, name: m[1], evidence: { resolver: historyKey } };
   for (const [lang, dict] of [['en', en], ['es', es]]) {
@@ -58,7 +63,20 @@ for (const m of resolverSrc.matchAll(/map\.put\(RobotErrorCode\.([A-Z0-9_]+),\s*
   table[code] = entry;
 }
 
+// Base (Clean Base): DockState.java da los números; los textos salen de autoevac_history_failed_error_N (título) y
+// autoevac_history_complete_error_N (mensaje). Los estados sin texto en la app se guardan solo con su nombre.
+const dockSrc = fs.readFileSync(path.join(ROOT, 'jadx-out/sources/com/irobot/core/DockState.java'), 'utf8');
+const dock = {};
+for (const m of dockSrc.matchAll(/public static final int (DOCK_[A-Z_]+) = (3\d\d);/g)) {
+  const code = Number(m[2]);
+  const keys = { title: `autoevac_history_failed_error_${code}`, message: `autoevac_history_complete_error_${code}` };
+  const entry = { code, name: m[1], evidence: { title: en[keys.title] !== undefined ? keys.title : null, message: en[keys.message] !== undefined ? keys.message : null } };
+  for (const [lang, dict] of [['en', en], ['es', es]]) entry[lang] = { title: dict[keys.title] ?? en[keys.title] ?? null, message: dict[keys.message] ?? en[keys.message] ?? null };
+  dock[code] = entry;
+}
+
 const unmappedEnum = Object.entries(codeOf).filter(([, c]) => c !== 0 && !table[c]).map(([n, c]) => `${c}:${n}`);
-fs.writeFileSync(OUT, JSON.stringify({ generatedFrom: 'iRobot Home 7.18.0 (RobotErrorCode, RobotStatusResolver, strings.xml en/es-ES)', count: Object.keys(table).length, errors: table }, null, 1));
+fs.writeFileSync(OUT, JSON.stringify({ generatedFrom: 'iRobot Home 7.18.0 (RobotErrorCode, RobotStatusResolver, DockState, strings.xml en/es-ES)', count: Object.keys(table).length, errors: table, dock }, null, 1));
 const noMsg = Object.values(table).filter((e) => !e.en.message).map((e) => e.code);
+console.log(`estados de la base: ${Object.keys(dock).length} (con texto: ${Object.values(dock).filter((d) => d.en.title).map((d) => d.code).join(',')})`);
 console.log(`códigos mapeados: ${Object.keys(table).length} | sin mensaje completo: ${noMsg.length} (${noMsg.join(',')}) | en el enum pero sin resolver: ${unmappedEnum.length} (${unmappedEnum.join(' ')})`);
