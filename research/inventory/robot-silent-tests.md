@@ -30,3 +30,6 @@ Estado antes y después: `charge/none`, `notReady=0`, sin cambios. El broker no 
 - `pmaps: []`, `pmapShare: {copy: null}`, `pmapLearningAllowed: false`, `mapUploadAllowed: true`, `sceneRecog: 1`, `optFeats.pmaps.enabled: false`: sin mapas persistentes (coincide con `cap.pmaps: null`).
 - `mssnNavStats` (por misión): `mpSt: "idle"`, `gLmk/lmk` (marcas de referencia visuales), `reLc` (relocalizaciones), `plnErr`, `l_drift/h_drift`, `l_squal/h_squal`: el robot navega con marcas visuales; en reposo todo a 0. Mirarlo DURANTE una misión daría calidad de localización en vivo.
 - `featureFlags`: `childLockEnable, hibLed, covPlan, ros2SptLvl, clearHaz, umcsIfNotDrc, quietNav`.
+
+## Matriz de `req` (2026-10-28, robot en la base, solo lectura)
+Probadas 21 combinaciones `{"reqId","reqType","conType"}` con `reqType` ∈ {current, unknown, Current} (el enum nativo `RobotCoordinatesType` solo tiene `Unknown`/`Current`) y `conType` ∈ {local, rrtp, mqtt, wifi, lan, cloud, Local}, más `umi/req {"do":"get","args":["pose"],"id":7}`, escuchando `#` 1,2 s tras cada una: **ninguna respuesta** (solo llegó `wifistat` periódico). Sin cambio de estado. Conclusión: en la base y en reposo el robot no contesta a RRTP/UMI por el MQTT local; hay que repetirlo con una misión en curso (no silencioso) o puede que la posición solo se pida por la nube (`/things/<BLID>/mission/rrtp/request`).
