@@ -4,6 +4,8 @@ research/mission-log.json
 research/apk/
 research/apk-splits/
 research/jadx-out/
+research/jadx-out-4.8.0/
+research/apk-old/
 research/native/
 node_modules/
 *.log
