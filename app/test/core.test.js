@@ -211,6 +211,19 @@ test('base mientras limpia: la i1+ ignora dock en run, así que se envía stop y
   c.stop();
 });
 
+test('base con la misión recién arrancada sobre la base: tras el stop ya carga y no se manda dock (provocaría un vaciado)', async () => {
+  const { robot, c } = await setup({ fake: { savingMapMs: 20 }, core: { dockSettleMs: 20 } });
+  await until(() => c.connected && c.state.batPct);
+  robot.onDock = true;
+  robot.startBy('schedule');
+  await until(() => c.state.cleanMissionStatus.phase === 'run');
+  c.command('dock');
+  await until(() => c.state.cleanMissionStatus.phase === 'charge');
+  await tick(80);
+  assert.deepEqual(robot.published.map((p) => p.body.command), ['stop']);
+  c.stop();
+});
+
 test('base mientras limpia: si el robot no sale de run, envía dock igualmente al acabar la espera', async () => {
   const { robot, c } = await setup({ core: { dockWaitMs: 60 } });
   await until(() => c.connected && c.state.batPct);

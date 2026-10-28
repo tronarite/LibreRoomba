@@ -48,6 +48,7 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000, savingMapMs
   robot.changePassword = (next) => { robot.password = next; robot.drop(); };
 
   // Arranque por la programación del propio robot (cleanSchedule2) o por su botón: no pasa por el topic `cmd`
+  robot.onDock = false;   // pruebas: la misión sigue sobre la base (acaba de arrancar)
   robot.startBy = (initiator) => robot.report({ cleanMissionStatus: { phase: 'run', cycle: 'clean', initiator } });
 
   robot.drop = () => { const lost = robot.clients; robot.clients = []; lost.forEach((c) => c.emit('close')); };   // corte de red
@@ -62,7 +63,8 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000, savingMapMs
     // Como la i1+ real: ignora dock mientras limpia y durante el notReady 39 que sigue a un stop
     if (body.command === 'dock' && (current.phase === 'run' || current.notReady === 39)) return;
     if (body.command === 'stop' && current.phase === 'run' && savingMapMs > 0) {
-      robot.report({ cleanMissionStatus: { phase: 'stop', cycle: 'none', notReady: 39 } });
+      // Parado aún sobre la base (misión recién arrancada), la i1+ vuelve directamente a charge (probado 2026-10-28)
+      robot.report({ cleanMissionStatus: { phase: robot.onDock ? 'charge' : 'stop', cycle: 'none', notReady: 39 } });
       const timer = setTimeout(() => robot.report({ cleanMissionStatus: { notReady: 0 } }), savingMapMs);
       if (timer.unref) timer.unref();
       return;

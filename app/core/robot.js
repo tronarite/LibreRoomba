@@ -178,17 +178,20 @@ class RobotCore extends EventEmitter {
     this._publish('cmd', { command: 'stop', time: Math.floor(Date.now() / 1000), initiator: 'localApp' });
     if (this._dockAfterStop) return;   // ya hay un dock pendiente
     let settle = null;
+    // Si tras el stop ya está cargando (la misión acababa de arrancar en la base), no se manda dock: en la base provoca un vaciado (probado)
     const finish = () => {
       clearTimeout(timer);
       clearTimeout(settle);
       this.removeListener('state', onState);
       this._dockAfterStop = null;
+      if ((this.state.cleanMissionStatus || {}).phase === 'charge') return;
       try { this._publish('cmd', { command: 'dock', time: Math.floor(Date.now() / 1000), initiator: 'localApp' }); } catch (error) { this.emit('error', error); }
     };
     const onState = () => {
       const m = this.state.cleanMissionStatus || {};
       clearTimeout(settle);
       settle = null;
+      if (m.phase === 'charge') return finish();
       if (!m.phase || m.phase === 'run' || (m.notReady !== undefined && m.notReady !== 0)) return;
       settle = setTimeout(finish, this._dockSettleMs);
       if (settle.unref) settle.unref();
