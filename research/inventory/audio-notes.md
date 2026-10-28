@@ -48,3 +48,22 @@ No se encontró ninguna (cadenas `playSound`, `beep`, `tone`, `chime`, `.wav`, `
 1. Decompilar con Ghidra 12.1.4 `LanguageSettingImpl::isLanguageOTAV2Supported`, `UpdateUIServiceImpl::attemptLocalOta` y el serializador de `RequestOtaCommand` para ver el JSON exacto que se envía al robot y qué campos del paquete (`RobotLanguagePackV2`) usa la app.
 2. Con una sesión de la app oficial: capturar (con permiso del usuario) qué ve el robot en `deploymentState` / `langs2` durante una descarga de idioma. Esto es una prueba con robot: va a `pending-robot-tests.md` y queda para cuando el usuario diga que hay acceso.
 3. Lectura de la API de la nube que ya consulta la app con la cuenta del usuario, solo lectura, sin modificarla (a decidir con el usuario).
+
+## 5. Segunda ronda (2026-10-28): cómo llega de verdad un paquete de voz al robot
+Análisis estático (Ghidra 12.1.4 sobre `libcore_base.so`, jadx) y cuatro consultas GET públicas al CMS de la app (sin cuenta ni datos del usuario, solo SKU y versión). Sin tocar el robot.
+
+**Formato de un paquete de idioma V2** (alta): `{sku, packId, languages[], version, deploymentMpkg, releaseDate}` (`com.irobot.home.model.rest.RobotLanguagePackV2Item`). El robot reporta en `langs2` lo instalado con `{ver, packId, langs}` (`RoombaLanguagesV2Deserializer::parseLanguagePack`); según `RobotLanguagesV2Event`, `dLangs` = paquete de fábrica (*default*), `uLangs` = paquete instalado por el usuario y `aSlots` = huecos libres. Tu i1+: 5 idiomas de fábrica, `uLangs: null`, `aSlots: 1`.
+
+**Instalación = OTA de firmware** (alta): el paquete se identifica por `deploymentMpkg`, el mismo «metapaquete de despliegue» que usa una actualización de firmware (`FirmwareUpdateJsonKey`: `downloadUrl`, `deploymentMpkg`, **`signing`**, `targetSoftwareVer`, `track` prod/beta/internaltest).
+- En la nube AWS (la de tu robot), `RequestOtaAwsSerializer` es una petición **HTTP de la app a la nube**: `/v1/<robot>/request-ota?app_id=…` con cuerpo `{"software_version":"…"}`. No es una orden MQTT al robot; el robot recibe el despliegue por su propia conexión a la nube (`svcEndpoints.svcDeplId: v011`). El `{"requestOta":"…"}` es la variante antigua (Axeda).
+- La **OTA local** (la app descarga y envía el paquete por la red local: estados `DownloadingUpdate` → `SendingUpdate`) tiene los errores `NotARoomba` y **`Not900Series`**: solo existe para la serie 900. No aplica a la i1+.
+- Los paquetes llevan campo `signing` y tu robot reporta `secureBoot.TSK: "PRODUCTION"`: todo indica paquetes firmados y verificados en el robot.
+
+**Catálogo público** (alta en el dato, media en la interpretación): la app consulta `https://content-prod.iot.irobotapi.com/v2/app/langpacks/<sku>` (raíz V2 de `ApplicationUIServiceData`, sin autenticación). Para `i155640` devuelve `{"languagePackItems": []}`; también vacío para `j755840`, `i755840` y `s955020`. `…/v2/firmware?sku=i155640&softwareVer=…&track=prod` devuelve `{"firmware": []}`. Hoy no hay ningún paquete de voz descargable para tu robot (ni, al parecer, para otros modelos), así que no hay paquete real que capturar ni estudiar.
+
+### Conclusión (cierra la línea de audio)
+1. No hay orden local para reproducir audio (sección 3).
+2. No hay canal local para instalar paquetes en la i1+ (la OTA local es solo de la serie 900).
+3. Los paquetes van como despliegues de firmware desde la nube de iRobot, con firma y arranque seguro de producción: un paquete propio sería rechazado salvo que se rompiera la verificación del firmware, algo fuera del alcance del proyecto.
+4. El catálogo oficial está vacío: la captura con proxy que quedaba pendiente no aportaría ningún paquete; **se descarta**.
+5. Lo que sí se puede: cambiar entre los 5 idiomas de fábrica (`{"langs2":{"sLang":"xx-XX"}}`, ajuste visible: avisar antes) y dar **voz en LibreRoomba** (avisos hablados desde el navegador o un altavoz de la casa a partir de los avisos del servidor).
