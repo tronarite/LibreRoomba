@@ -10,7 +10,7 @@ const INITIAL = {
   langs2: { sLang: 'es-ES', dLangs: { langs: ['de-DE', 'en-GB', 'es-ES', 'fr-FR', 'it-IT'] } }, dock: { fwVer: 'mock', state: 301 },
   pmaps: [], bbmssn: { nMssn: 0, nMssnOk: 0, nMssnC: 0, nMssnF: 0, aMssnM: 0 }
 };
-const PHASE = { start: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 'hmUsrDock', evac: 'evac' };
+const PHASE = { start: 'run', train: 'run', resume: 'run', pause: 'stop', stop: 'stop', dock: 'hmUsrDock', evac: 'evac' };
 
 // opciones: password (si se da, rechaza otras), state (parte del estado inicial), dockDelayMs (tiempo hasta volver a cargar),
 // savingMapMs (tras parar una misión, tiempo en notReady 39 «guardando el mapa», como la i1+ real; 0 = sin ese paso)
@@ -71,7 +71,7 @@ function createFakeRobot({ password, state = {}, dockDelayMs = 4000, savingMapMs
     }
     const returns = body.command === 'dock' || body.command === 'evac';
     const started = body.command === 'start' ? { initiator: body.initiator || 'localApp' } : {};   // el robot real reporta quién inició la misión
-    robot.report({ cleanMissionStatus: { phase, cycle: returns ? 'none' : 'clean', ...started } });
+    robot.report({ cleanMissionStatus: { phase, cycle: returns ? 'none' : body.command === 'train' ? 'train' : 'clean', ...started } });
     if (returns) {
       const timer = setTimeout(() => robot.report({ cleanMissionStatus: { phase: 'charge', cycle: 'none' } }), dockDelayMs);
       if (timer.unref) timer.unref();

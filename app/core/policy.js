@@ -2,7 +2,7 @@
 // Solo entra lo verificado en el robot real (research/protocol-notes.md); lo demás va en EXPERIMENTAL_*.
 const bool = (v) => typeof v === 'boolean';
 
-const COMMANDS = new Set(['start', 'stop', 'pause', 'resume', 'dock', 'find', 'evac']);
+const COMMANDS = new Set(['start', 'stop', 'pause', 'resume', 'dock', 'find', 'evac', 'train']);
 
 // Ajustes aceptados por el topic `delta` (probados y restaurados).
 const PREFS = {

@@ -28,7 +28,7 @@ function render(data) {
     input.disabled = !data.connected || value === undefined;
     if (document.activeElement !== input && value !== undefined) { if (input.type === 'checkbox') input.checked = !!value; else input.value = String(value); }
   }
-  const enabled = { start: ['charge', 'stop'].includes(phase), pause: phase === 'run', resume: ['stop', 'pause'].includes(phase), stop: ['run', 'pause'].includes(phase), dock: ['run', 'stop', 'pause'].includes(phase), find: true, evac: phase === 'charge' && data.info?.evacAllowed === true };
+  const enabled = { start: ['charge', 'stop'].includes(phase), train: phase === 'charge', pause: phase === 'run', resume: ['stop', 'pause'].includes(phase), stop: ['run', 'pause'].includes(phase), dock: ['run', 'stop', 'pause'].includes(phase), find: true, evac: phase === 'charge' && data.info?.evacAllowed === true };
   buttons.forEach((button) => button.disabled = !data.connected || !enabled[button.dataset.command]);
   renderInfo(data); renderExperimental(data);
 }

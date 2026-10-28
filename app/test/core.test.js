@@ -236,3 +236,12 @@ test('base mientras limpia: si el robot no sale de run, envía dock igualmente a
   assert.equal(c.state.cleanMissionStatus.phase, 'run', 'el simulado, como el real, ignora dock en run');
   c.stop();
 });
+
+test('train es una orden normal y arranca un ciclo de reconocimiento', async () => {
+  const { c } = await setup();
+  await until(() => c.connected && c.state.batPct);
+  c.command('train');
+  await until(() => c.state.cleanMissionStatus.cycle === 'train');
+  assert.equal(c.state.cleanMissionStatus.phase, 'run');
+  c.stop();
+});
